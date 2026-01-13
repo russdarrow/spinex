@@ -1,14 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MapPin, Calendar, Link as LinkIcon, BadgeCheck, Grid3X3, Bookmark } from 'lucide-react-native';
+import { MapPin, Calendar, Link as LinkIcon, BadgeCheck, Grid3X3, Bookmark, ShieldCheck } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { currentUser, posts, formatNumber } from '@/lib/mock-data';
 import { PostCard } from '@/components/PostCard';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface UserProfile {
+  name: string;
+  institution: string;
+  specialties: string[];
+  npi: string | null;
+  isVerified: boolean;
+  credential: string;
+}
+
+const USER_PROFILE_KEY = '@spinex_user_profile';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'posts' | 'replies' | 'media' | 'likes'>('posts');
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const data = await AsyncStorage.getItem(USER_PROFILE_KEY);
+        if (data) {
+          setUserProfile(JSON.parse(data));
+        }
+      } catch (e) {
+        console.log('Error loading profile:', e);
+      }
+    }
+    loadProfile();
+  }, []);
+
+  // Use saved profile name if available, otherwise fallback to mock data
+  const displayName = userProfile?.name || currentUser.name;
+  const displayInstitution = userProfile?.institution || currentUser.institution;
+  const isVerified = userProfile?.isVerified ?? currentUser.isVerified;
 
   const userPosts = posts.filter(p => p.isLiked || p.isBookmarked).slice(0, 3);
 
@@ -36,13 +68,21 @@ export default function ProfileScreen() {
           <View className="mt-3">
             <View className="flex-row items-center">
               <Text className="text-xl font-bold text-zinc-900 dark:text-white">
-                {currentUser.name}
+                {displayName}
               </Text>
-              {currentUser.isVerified && (
+              {isVerified && (
                 <BadgeCheck size={20} color="#0ea5e9" fill="#0ea5e9" className="ml-1" />
               )}
             </View>
             <Text className="text-zinc-500 dark:text-zinc-400">@{currentUser.handle}</Text>
+            {isVerified && userProfile?.npi && (
+              <View className="flex-row items-center mt-2 bg-emerald-500/10 px-3 py-1.5 rounded-full self-start">
+                <ShieldCheck size={14} color="#10b981" />
+                <Text className="text-emerald-600 dark:text-emerald-400 text-xs font-medium ml-1">
+                  Verified Physician • NPI {userProfile.npi}
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Bio */}
@@ -50,12 +90,23 @@ export default function ProfileScreen() {
             {currentUser.bio}
           </Text>
 
+          {/* Specialties */}
+          {userProfile?.specialties && userProfile.specialties.length > 0 && (
+            <View className="flex-row flex-wrap mt-3">
+              {userProfile.specialties.map((specialty) => (
+                <View key={specialty} className="bg-sky-500/10 px-2.5 py-1 rounded-full mr-2 mb-1">
+                  <Text className="text-sky-600 dark:text-sky-400 text-xs font-medium">{specialty}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* Details */}
           <View className="flex-row flex-wrap mt-3">
             <View className="flex-row items-center mr-4 mb-1">
               <MapPin size={14} color="#71717a" />
               <Text className="text-zinc-500 dark:text-zinc-400 text-sm ml-1">
-                {currentUser.institution}
+                {displayInstitution}
               </Text>
             </View>
             <View className="flex-row items-center mr-4 mb-1">

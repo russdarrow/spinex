@@ -6,13 +6,13 @@ import {
   Dimensions,
   TextInput,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
   withSpring,
   interpolate,
   Extrapolation,
@@ -26,12 +26,20 @@ import {
   ChevronRight,
   Check,
   Sparkles,
+  ShieldCheck,
+  AlertCircle,
+  Search,
+  BadgeCheck,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { verifyNPI, searchNPI, NPIResult } from '@/lib/npi-lookup';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const ONBOARDING_KEY = '@spinex_onboarding_complete';
+const USER_PROFILE_KEY = '@spinex_user_profile';
+
+type OnboardingStep = 'slides' | 'verification' | 'profile';
 
 interface OnboardingSlide {
   id: string;
@@ -122,13 +130,24 @@ function DotIndicator({ index, slideAnim }: { index: number; slideAnim: Animated
 export default function OnboardingScreen() {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const [currentStep, setCurrentStep] = useState<OnboardingStep>('slides');
+
+  // Verification state
+  const [npiNumber, setNpiNumber] = useState('');
+  const [searchFirstName, setSearchFirstName] = useState('');
+  const [searchLastName, setSearchLastName] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationError, setVerificationError] = useState('');
+  const [verifiedPhysician, setVerifiedPhysician] = useState<NPIResult | null>(null);
+  const [searchResults, setSearchResults] = useState<NPIResult[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // Profile state
   const [name, setName] = useState('');
   const [institution, setInstitution] = useState('');
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
 
   const slideAnim = useSharedValue(0);
-  const profileAnim = useSharedValue(0);
 
   const goToSlide = (index: number) => {
     slideAnim.value = withSpring(index, { damping: 20, stiffness: 90 });
@@ -139,14 +158,84 @@ export default function OnboardingScreen() {
     if (currentIndex < slides.length - 1) {
       goToSlide(currentIndex + 1);
     } else {
-      profileAnim.value = withTiming(1, { duration: 400 });
-      setShowProfileSetup(true);
+      setCurrentStep('verification');
     }
   };
 
   const handleSkip = () => {
-    profileAnim.value = withTiming(1, { duration: 400 });
-    setShowProfileSetup(true);
+    setCurrentStep('verification');
+  };
+
+  const handleVerifyNPI = async () => {
+    if (!npiNumber.trim()) {
+      setVerificationError('Please enter your NPI number');
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerificationError('');
+    setVerifiedPhysician(null);
+
+    try {
+      const result = await verifyNPI(npiNumber.trim());
+
+      if (result) {
+        setVerifiedPhysician(result);
+        setName(result.name);
+        setTimeout(() => {
+          setCurrentStep('profile');
+        }, 1500);
+      } else {
+        setVerificationError('NPI not found. Please check the number or search by name.');
+      }
+    } catch (error) {
+      setVerificationError('Verification failed. Please try again.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleSearchByName = async () => {
+    if (!searchLastName.trim()) {
+      setVerificationError('Please enter your last name to search');
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerificationError('');
+    setSearchResults([]);
+
+    try {
+      const results = await searchNPI({
+        firstName: searchFirstName.trim() || undefined,
+        lastName: searchLastName.trim(),
+      });
+
+      if (results.length > 0) {
+        setSearchResults(results);
+        setShowSearchResults(true);
+      } else {
+        setVerificationError('No physicians found. Try different search criteria.');
+      }
+    } catch (error) {
+      setVerificationError('Search failed. Please try again.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const selectPhysician = (physician: NPIResult) => {
+    setVerifiedPhysician(physician);
+    setNpiNumber(physician.npi);
+    setName(physician.name);
+    setShowSearchResults(false);
+    setTimeout(() => {
+      setCurrentStep('profile');
+    }, 1000);
+  };
+
+  const skipVerification = () => {
+    setCurrentStep('profile');
   };
 
   const toggleSpecialty = (specialty: string) => {
@@ -160,7 +249,18 @@ export default function OnboardingScreen() {
   const completeOnboarding = async () => {
     try {
       console.log('[Onboarding] Saving completion...');
+
+      const profile = {
+        name,
+        institution,
+        specialties: selectedSpecialties,
+        npi: verifiedPhysician?.npi || null,
+        isVerified: !!verifiedPhysician,
+        credential: verifiedPhysician?.credential || '',
+      };
+      await AsyncStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
       await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+
       console.log('[Onboarding] Saved! Navigating to tabs...');
       router.replace('/(tabs)');
     } catch (error) {
@@ -169,262 +269,410 @@ export default function OnboardingScreen() {
     }
   };
 
-  const profileStyle = useAnimatedStyle(() => ({
-    opacity: profileAnim.value,
-    transform: [
-      { translateY: interpolate(profileAnim.value, [0, 1], [50, 0]) },
-    ],
-  }));
-
-  const slidesStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(profileAnim.value, [0, 1], [1, 0]),
-    transform: [
-      { translateY: interpolate(profileAnim.value, [0, 1], [0, -50]) },
-    ],
-  }));
-
   const slidesContainerStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: -slideAnim.value * SCREEN_WIDTH },
-    ],
+    transform: [{ translateX: -slideAnim.value * SCREEN_WIDTH }],
   }));
 
-  if (showProfileSetup) {
+  // VERIFICATION SCREEN
+  if (currentStep === 'verification') {
     return (
-      <View className="flex-1 bg-zinc-950">
+      <View style={{ flex: 1, backgroundColor: '#09090b' }}>
         <LinearGradient
-          colors={['#0ea5e9', '#0284c7', '#0369a1']}
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 300 }}
+          colors={['#10b981', '#059669', '#047857']}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 280 }}
         />
-        <SafeAreaView className="flex-1">
-          <Animated.View style={[{ flex: 1 }, profileStyle]}>
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-              {/* Header */}
-              <View className="px-6 pt-8 pb-12">
-                <View className="flex-row items-center mb-2">
-                  <Sparkles size={24} color="white" />
-                  <Text className="text-white text-lg font-medium ml-2">Almost there!</Text>
-                </View>
-                <Text className="text-white text-3xl font-bold">
-                  Set up your profile
-                </Text>
-                <Text className="text-white/70 text-base mt-2">
-                  Help colleagues find and connect with you
+        <SafeAreaView style={{ flex: 1 }}>
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {/* Header */}
+            <View style={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 40 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                <ShieldCheck size={24} color="white" />
+                <Text style={{ color: 'white', fontSize: 18, fontWeight: '500', marginLeft: 8 }}>
+                  Physician Verification
                 </Text>
               </View>
+              <Text style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
+                Verify your credentials
+              </Text>
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, marginTop: 8 }}>
+                We cross-check national physician databases to ensure a trusted community
+              </Text>
+            </View>
 
-              {/* Form Card */}
-              <View className="bg-white dark:bg-zinc-900 rounded-t-[32px] flex-1 px-6 pt-8 pb-12 min-h-[600px]">
-                {/* Name Input */}
-                <View className="mb-6">
-                  <Text className="text-zinc-900 dark:text-white font-semibold mb-2">
-                    Full Name
-                  </Text>
-                  <TextInput
-                    value={name}
-                    onChangeText={setName}
-                    placeholder="Dr. Jane Smith"
-                    placeholderTextColor="#a1a1aa"
-                    className="bg-zinc-100 dark:bg-zinc-800 px-4 py-3.5 rounded-xl text-zinc-900 dark:text-white text-base"
-                  />
-                </View>
-
-                {/* Institution Input */}
-                <View className="mb-6">
-                  <Text className="text-zinc-900 dark:text-white font-semibold mb-2">
-                    Institution
-                  </Text>
-                  <TextInput
-                    value={institution}
-                    onChangeText={setInstitution}
-                    placeholder="Mayo Clinic, Stanford Medicine..."
-                    placeholderTextColor="#a1a1aa"
-                    className="bg-zinc-100 dark:bg-zinc-800 px-4 py-3.5 rounded-xl text-zinc-900 dark:text-white text-base"
-                  />
-                </View>
-
-                {/* Specialties */}
-                <View className="mb-8">
-                  <Text className="text-zinc-900 dark:text-white font-semibold mb-3">
-                    Specialties (select all that apply)
-                  </Text>
-                  <View className="flex-row flex-wrap">
-                    {specialties.map(specialty => {
-                      const isSelected = selectedSpecialties.includes(specialty);
-                      return (
-                        <Pressable
-                          key={specialty}
-                          onPress={() => toggleSpecialty(specialty)}
-                          className={`flex-row items-center px-3.5 py-2 rounded-full mr-2 mb-2 border ${
-                            isSelected
-                              ? 'bg-sky-500 border-sky-500'
-                              : 'bg-transparent border-zinc-200 dark:border-zinc-700'
-                          }`}
-                        >
-                          {isSelected && <Check size={14} color="white" />}
-                          <Text
-                            className={`text-sm font-medium ${
-                              isSelected ? 'text-white ml-1' : 'text-zinc-700 dark:text-zinc-300'
-                            }`}
-                          >
-                            {specialty}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
+            {/* Form Card */}
+            <View style={{ backgroundColor: '#18181b', borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 24, paddingTop: 32, paddingBottom: 48, minHeight: 500 }}>
+              {/* Verified Success State */}
+              {verifiedPhysician && (
+                <View style={{ backgroundColor: '#052e16', borderRadius: 16, padding: 16, marginBottom: 24, flexDirection: 'row', alignItems: 'center' }}>
+                  <BadgeCheck size={32} color="#22c55e" />
+                  <View style={{ marginLeft: 12, flex: 1 }}>
+                    <Text style={{ color: '#22c55e', fontWeight: 'bold', fontSize: 16 }}>Verified!</Text>
+                    <Text style={{ color: '#86efac', fontSize: 14 }}>{verifiedPhysician.name}</Text>
+                    <Text style={{ color: '#86efac', fontSize: 12, marginTop: 2 }}>{verifiedPhysician.specialty}</Text>
                   </View>
                 </View>
+              )}
 
-                {/* Continue Button */}
-                <Pressable
-                  onPress={completeOnboarding}
-                  className="bg-sky-500 py-4 rounded-2xl items-center active:bg-sky-600"
-                  style={{
-                    shadowColor: '#0ea5e9',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 8,
-                    elevation: 8,
-                  }}
-                >
-                  <Text className="text-white font-bold text-lg">Get Started</Text>
-                </Pressable>
+              {/* Search Results */}
+              {showSearchResults && searchResults.length > 0 && (
+                <View style={{ marginBottom: 24 }}>
+                  <Text style={{ color: 'white', fontWeight: '600', marginBottom: 12 }}>
+                    Select your profile:
+                  </Text>
+                  {searchResults.map((physician) => (
+                    <Pressable
+                      key={physician.npi}
+                      onPress={() => selectPhysician(physician)}
+                      style={{ backgroundColor: '#27272a', borderRadius: 12, padding: 16, marginBottom: 8 }}
+                    >
+                      <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>{physician.name}</Text>
+                      <Text style={{ color: '#a1a1aa', fontSize: 14, marginTop: 2 }}>{physician.specialty}</Text>
+                      <Text style={{ color: '#71717a', fontSize: 12, marginTop: 4 }}>
+                        NPI: {physician.npi} • {physician.city}, {physician.state}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
 
-                {/* Skip for now */}
-                <Pressable
-                  onPress={completeOnboarding}
-                  className="py-4 items-center mt-2"
-                >
-                  <Text className="text-zinc-500 font-medium">Skip for now</Text>
-                </Pressable>
-              </View>
-            </ScrollView>
-          </Animated.View>
+              {/* Error Message */}
+              {verificationError && !verifiedPhysician && (
+                <View style={{ backgroundColor: '#450a0a', borderRadius: 12, padding: 12, marginBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
+                  <AlertCircle size={20} color="#ef4444" />
+                  <Text style={{ color: '#fca5a5', marginLeft: 8, flex: 1 }}>{verificationError}</Text>
+                </View>
+              )}
+
+              {!verifiedPhysician && !showSearchResults && (
+                <>
+                  {/* NPI Input */}
+                  <View style={{ marginBottom: 24 }}>
+                    <Text style={{ color: 'white', fontWeight: '600', marginBottom: 8 }}>
+                      NPI Number
+                    </Text>
+                    <View style={{ flexDirection: 'row' }}>
+                      <TextInput
+                        value={npiNumber}
+                        onChangeText={setNpiNumber}
+                        placeholder="Enter your 10-digit NPI"
+                        placeholderTextColor="#71717a"
+                        keyboardType="number-pad"
+                        maxLength={10}
+                        style={{ flex: 1, backgroundColor: '#27272a', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, color: 'white', fontSize: 16, marginRight: 8 }}
+                      />
+                      <Pressable
+                        onPress={handleVerifyNPI}
+                        disabled={isVerifying}
+                        style={{ backgroundColor: '#10b981', paddingHorizontal: 20, borderRadius: 12, justifyContent: 'center', alignItems: 'center' }}
+                      >
+                        {isVerifying ? (
+                          <ActivityIndicator color="white" size="small" />
+                        ) : (
+                          <Text style={{ color: 'white', fontWeight: 'bold' }}>Verify</Text>
+                        )}
+                      </Pressable>
+                    </View>
+                  </View>
+
+                  {/* Divider */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
+                    <View style={{ flex: 1, height: 1, backgroundColor: '#3f3f46' }} />
+                    <Text style={{ color: '#71717a', marginHorizontal: 16, fontSize: 14 }}>or search by name</Text>
+                    <View style={{ flex: 1, height: 1, backgroundColor: '#3f3f46' }} />
+                  </View>
+
+                  {/* Name Search */}
+                  <View style={{ marginBottom: 16 }}>
+                    <Text style={{ color: 'white', fontWeight: '600', marginBottom: 8 }}>First Name</Text>
+                    <TextInput
+                      value={searchFirstName}
+                      onChangeText={setSearchFirstName}
+                      placeholder="John"
+                      placeholderTextColor="#71717a"
+                      style={{ backgroundColor: '#27272a', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, color: 'white', fontSize: 16 }}
+                    />
+                  </View>
+
+                  <View style={{ marginBottom: 16 }}>
+                    <Text style={{ color: 'white', fontWeight: '600', marginBottom: 8 }}>Last Name</Text>
+                    <TextInput
+                      value={searchLastName}
+                      onChangeText={setSearchLastName}
+                      placeholder="Smith"
+                      placeholderTextColor="#71717a"
+                      style={{ backgroundColor: '#27272a', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, color: 'white', fontSize: 16 }}
+                    />
+                  </View>
+
+                  <Pressable
+                    onPress={handleSearchByName}
+                    disabled={isVerifying}
+                    style={{ backgroundColor: '#3f3f46', paddingVertical: 14, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 24 }}
+                  >
+                    {isVerifying ? (
+                      <ActivityIndicator color="white" size="small" />
+                    ) : (
+                      <>
+                        <Search size={18} color="white" />
+                        <Text style={{ color: 'white', fontWeight: '600', marginLeft: 8 }}>Search Database</Text>
+                      </>
+                    )}
+                  </Pressable>
+                </>
+              )}
+
+              {/* Skip Verification */}
+              <Pressable
+                onPress={skipVerification}
+                style={{ paddingVertical: 16, alignItems: 'center' }}
+              >
+                <Text style={{ color: '#71717a', fontWeight: '500' }}>Skip verification for now</Text>
+                <Text style={{ color: '#52525b', fontSize: 12, marginTop: 4 }}>You can verify later in settings</Text>
+              </Pressable>
+            </View>
+          </ScrollView>
         </SafeAreaView>
       </View>
     );
   }
 
-  const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-  return (
-    <View style={{ flex: 1, backgroundColor: '#09090b' }}>
-      <Animated.View style={[{ flex: 1 }, slidesStyle]}>
-        {/* Slides */}
-        <Animated.View
-          style={[
-            {
-              flexDirection: 'row',
-              width: SCREEN_WIDTH * slides.length,
-              height: SCREEN_HEIGHT,
-            },
-            slidesContainerStyle,
-          ]}
-        >
-          {slides.map((slide) => (
-            <LinearGradient
-              key={slide.id}
-              colors={slide.gradient as [string, string]}
-              style={{
-                width: SCREEN_WIDTH,
-                height: SCREEN_HEIGHT,
-              }}
-            >
-              <SafeAreaView style={{ flex: 1 }}>
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }}>
-                  {/* Icon Container */}
-                  <View
-                    style={{
-                      width: 128,
-                      height: 128,
-                      borderRadius: 64,
-                      backgroundColor: 'rgba(255,255,255,0.2)',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: 32
-                    }}
-                  >
-                    {slide.icon}
-                  </View>
-
-                  {/* Title */}
-                  <Text
-                    style={{
-                      color: 'white',
-                      fontSize: 30,
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                      marginBottom: 16
-                    }}
-                  >
-                    {slide.title}
-                  </Text>
-
-                  {/* Subtitle */}
-                  <Text
-                    style={{
-                      color: 'rgba(255,255,255,0.8)',
-                      fontSize: 18,
-                      textAlign: 'center',
-                      lineHeight: 28,
-                      paddingHorizontal: 16,
-                    }}
-                  >
-                    {slide.subtitle}
-                  </Text>
-                </View>
-              </SafeAreaView>
-            </LinearGradient>
-          ))}
-        </Animated.View>
-
-        {/* Bottom Controls */}
-        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: 48, paddingHorizontal: 24 }}>
-          <SafeAreaView edges={['bottom']}>
-            {/* Dots */}
-            <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 32 }}>
-              {slides.map((_, index) => (
-                <Pressable
-                  key={index}
-                  onPress={() => goToSlide(index)}
-                  style={{ padding: 4 }}
-                >
-                  <DotIndicator index={index} slideAnim={slideAnim} />
-                </Pressable>
-              ))}
+  // PROFILE SETUP SCREEN
+  if (currentStep === 'profile') {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#09090b' }}>
+        <LinearGradient
+          colors={['#0ea5e9', '#0284c7', '#0369a1']}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 280 }}
+        />
+        <SafeAreaView style={{ flex: 1 }}>
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {/* Header */}
+            <View style={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 40 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                <Sparkles size={24} color="white" />
+                <Text style={{ color: 'white', fontSize: 18, fontWeight: '500', marginLeft: 8 }}>Almost there!</Text>
+              </View>
+              <Text style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
+                Set up your profile
+              </Text>
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, marginTop: 8 }}>
+                Help colleagues find and connect with you
+              </Text>
             </View>
 
-            {/* Buttons */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Pressable onPress={handleSkip} style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
-                <Text style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '500', fontSize: 16 }}>Skip</Text>
-              </Pressable>
+            {/* Form Card */}
+            <View style={{ backgroundColor: '#18181b', borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 24, paddingTop: 32, paddingBottom: 48, minHeight: 500 }}>
+              {/* Verified Badge */}
+              {verifiedPhysician && (
+                <View style={{ backgroundColor: '#052e16', borderRadius: 12, padding: 12, marginBottom: 20, flexDirection: 'row', alignItems: 'center' }}>
+                  <BadgeCheck size={20} color="#22c55e" />
+                  <Text style={{ color: '#22c55e', fontWeight: '600', marginLeft: 8 }}>Verified Physician</Text>
+                </View>
+              )}
 
+              {/* Name Input */}
+              <View style={{ marginBottom: 20 }}>
+                <Text style={{ color: 'white', fontWeight: '600', marginBottom: 8 }}>Full Name</Text>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Dr. Jane Smith"
+                  placeholderTextColor="#71717a"
+                  style={{ backgroundColor: '#27272a', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, color: 'white', fontSize: 16 }}
+                />
+              </View>
+
+              {/* Institution Input */}
+              <View style={{ marginBottom: 20 }}>
+                <Text style={{ color: 'white', fontWeight: '600', marginBottom: 8 }}>Institution</Text>
+                <TextInput
+                  value={institution}
+                  onChangeText={setInstitution}
+                  placeholder="Mayo Clinic, Stanford Medicine..."
+                  placeholderTextColor="#71717a"
+                  style={{ backgroundColor: '#27272a', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, color: 'white', fontSize: 16 }}
+                />
+              </View>
+
+              {/* Specialties */}
+              <View style={{ marginBottom: 28 }}>
+                <Text style={{ color: 'white', fontWeight: '600', marginBottom: 12 }}>
+                  Specialties (select all that apply)
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                  {specialties.map(specialty => {
+                    const isSelected = selectedSpecialties.includes(specialty);
+                    return (
+                      <Pressable
+                        key={specialty}
+                        onPress={() => toggleSpecialty(specialty)}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          paddingHorizontal: 14,
+                          paddingVertical: 8,
+                          borderRadius: 20,
+                          marginRight: 8,
+                          marginBottom: 8,
+                          backgroundColor: isSelected ? '#0ea5e9' : 'transparent',
+                          borderWidth: 1,
+                          borderColor: isSelected ? '#0ea5e9' : '#3f3f46',
+                        }}
+                      >
+                        {isSelected && <Check size={14} color="white" />}
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontWeight: '500',
+                            color: isSelected ? 'white' : '#a1a1aa',
+                            marginLeft: isSelected ? 4 : 0,
+                          }}
+                        >
+                          {specialty}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Continue Button */}
               <Pressable
-                onPress={handleNext}
+                onPress={completeOnboarding}
                 style={{
-                  backgroundColor: 'white',
-                  flexDirection: 'row',
+                  backgroundColor: '#0ea5e9',
+                  paddingVertical: 16,
+                  borderRadius: 16,
                   alignItems: 'center',
-                  paddingVertical: 14,
-                  paddingHorizontal: 24,
-                  borderRadius: 9999,
-                  shadowColor: '#000',
+                  shadowColor: '#0ea5e9',
                   shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.15,
+                  shadowOpacity: 0.3,
                   shadowRadius: 8,
                   elevation: 8,
                 }}
               >
-                <Text style={{ color: '#18181b', fontWeight: 'bold', fontSize: 16, marginRight: 4 }}>
-                  {currentIndex === slides.length - 1 ? 'Continue' : 'Next'}
-                </Text>
-                <ChevronRight size={20} color="#18181b" />
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 18 }}>Get Started</Text>
+              </Pressable>
+
+              {/* Skip for now */}
+              <Pressable
+                onPress={completeOnboarding}
+                style={{ paddingVertical: 16, alignItems: 'center', marginTop: 8 }}
+              >
+                <Text style={{ color: '#71717a', fontWeight: '500' }}>Skip for now</Text>
               </Pressable>
             </View>
-          </SafeAreaView>
-        </View>
+          </ScrollView>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
+  // INTRO SLIDES
+  return (
+    <View style={{ flex: 1, backgroundColor: '#09090b' }}>
+      {/* Slides */}
+      <Animated.View
+        style={[
+          {
+            flexDirection: 'row',
+            width: SCREEN_WIDTH * slides.length,
+            height: SCREEN_HEIGHT,
+          },
+          slidesContainerStyle,
+        ]}
+      >
+        {slides.map((slide) => (
+          <LinearGradient
+            key={slide.id}
+            colors={slide.gradient as [string, string]}
+            style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT }}
+          >
+            <SafeAreaView style={{ flex: 1 }}>
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }}>
+                <View
+                  style={{
+                    width: 128,
+                    height: 128,
+                    borderRadius: 64,
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: 32,
+                  }}
+                >
+                  {slide.icon}
+                </View>
+                <Text
+                  style={{
+                    color: 'white',
+                    fontSize: 30,
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    marginBottom: 16,
+                  }}
+                >
+                  {slide.title}
+                </Text>
+                <Text
+                  style={{
+                    color: 'rgba(255,255,255,0.8)',
+                    fontSize: 18,
+                    textAlign: 'center',
+                    lineHeight: 28,
+                    paddingHorizontal: 16,
+                  }}
+                >
+                  {slide.subtitle}
+                </Text>
+              </View>
+            </SafeAreaView>
+          </LinearGradient>
+        ))}
       </Animated.View>
+
+      {/* Bottom Controls */}
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: 48, paddingHorizontal: 24 }}>
+        <SafeAreaView edges={['bottom']}>
+          {/* Dots */}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 32 }}>
+            {slides.map((_, index) => (
+              <Pressable key={index} onPress={() => goToSlide(index)} style={{ padding: 4 }}>
+                <DotIndicator index={index} slideAnim={slideAnim} />
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Buttons */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Pressable onPress={handleSkip} style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '500', fontSize: 16 }}>Skip</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleNext}
+              style={{
+                backgroundColor: 'white',
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 14,
+                paddingHorizontal: 24,
+                borderRadius: 9999,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 8,
+                elevation: 8,
+              }}
+            >
+              <Text style={{ color: '#18181b', fontWeight: 'bold', fontSize: 16, marginRight: 4 }}>
+                {currentIndex === slides.length - 1 ? 'Continue' : 'Next'}
+              </Text>
+              <ChevronRight size={20} color="#18181b" />
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </View>
     </View>
   );
 }
