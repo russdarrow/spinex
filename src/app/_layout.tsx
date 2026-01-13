@@ -1,24 +1,63 @@
+import { useEffect, useState } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from '@/lib/useColorScheme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const unstable_settings = {
-  initialRouteName: '(tabs)',
-};
+const ONBOARDING_KEY = '@spinex_onboarding_complete';
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
+function useOnboardingCheck() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    async function checkOnboarding() {
+      try {
+        const value = await AsyncStorage.getItem(ONBOARDING_KEY);
+        setHasCompletedOnboarding(value === 'true');
+      } catch {
+        setHasCompletedOnboarding(false);
+      } finally {
+        setIsLoading(false);
+        SplashScreen.hideAsync();
+      }
+    }
+    checkOnboarding();
+  }, []);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inOnboarding = segments[0] === 'onboarding';
+
+    if (!hasCompletedOnboarding && !inOnboarding) {
+      router.replace('/onboarding');
+    } else if (hasCompletedOnboarding && inOnboarding) {
+      router.replace('/(tabs)');
+    }
+  }, [isLoading, hasCompletedOnboarding, segments, router]);
+
+  return { isLoading, hasCompletedOnboarding };
+}
+
 function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null | undefined }) {
+  useOnboardingCheck();
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
+        <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="compose" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="post/[id]" options={{ headerShown: false }} />

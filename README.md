@@ -4,6 +4,12 @@ A Twitter/X-style social media app designed for spine surgeons to discuss patien
 
 ## Features
 
+### Onboarding
+- **Welcome Slides**: 4 animated slides introducing SpineX features
+- **Profile Setup**: Name, institution, and specialty selection
+- **Animated Transitions**: Smooth slide animations with spring physics
+- **Persistent State**: Remembers when onboarding is completed
+
 ### Core Social Features
 - **Home Feed**: Browse posts with "For You" and "Following" tabs
 - **Search & Explore**: Find trending topics, medical devices, and surgeons
@@ -35,6 +41,7 @@ A Twitter/X-style social media app designed for spine surgeons to discuss patien
 
 ## Screens
 
+- `onboarding.tsx` - Multi-step onboarding with animated slides
 - `(tabs)/index.tsx` - Home feed with categorized posts
 - `(tabs)/search.tsx` - Search with Trending, Devices, and Surgeons tabs
 - `(tabs)/notifications.tsx` - Notification center
