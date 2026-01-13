@@ -4,13 +4,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
 import { PostCard } from '@/components/PostCard';
-import { posts as initialPosts, currentUser } from '@/lib/mock-data';
+import { posts as initialPosts, currentUser, users } from '@/lib/mock-data';
 import { Post } from '@/lib/types';
 
 export default function FeedScreen() {
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'forYou' | 'following'>('forYou');
+
+  // Simulated "following" - users[0] and users[2] are followed
+  const followingIds = ['1', '3'];
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -49,6 +53,11 @@ export default function FeedScreen() {
     );
   };
 
+  // Filter posts based on active tab
+  const displayedPosts = activeTab === 'following'
+    ? posts.filter(post => followingIds.includes(post.author.id))
+    : posts;
+
   return (
     <View className="flex-1 bg-white dark:bg-black">
       <SafeAreaView className="flex-1" edges={['top']}>
@@ -67,11 +76,21 @@ export default function FeedScreen() {
 
         {/* Feed Tabs */}
         <View className="flex-row border-b border-zinc-100 dark:border-zinc-800">
-          <Pressable className="flex-1 py-3 border-b-2 border-sky-500">
-            <Text className="text-center font-semibold text-zinc-900 dark:text-white">For You</Text>
+          <Pressable
+            onPress={() => setActiveTab('forYou')}
+            className={`flex-1 py-3 ${activeTab === 'forYou' ? 'border-b-2 border-sky-500' : ''}`}
+          >
+            <Text className={`text-center font-semibold ${activeTab === 'forYou' ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'}`}>
+              For You
+            </Text>
           </Pressable>
-          <Pressable className="flex-1 py-3">
-            <Text className="text-center text-zinc-500 dark:text-zinc-400">Following</Text>
+          <Pressable
+            onPress={() => setActiveTab('following')}
+            className={`flex-1 py-3 ${activeTab === 'following' ? 'border-b-2 border-sky-500' : ''}`}
+          >
+            <Text className={`text-center font-semibold ${activeTab === 'following' ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-zinc-400'}`}>
+              Following
+            </Text>
           </Pressable>
         </View>
 
@@ -83,16 +102,27 @@ export default function FeedScreen() {
           }
           showsVerticalScrollIndicator={false}
         >
-          {posts.map(post => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onPress={() => router.push(`/post/${post.id}`)}
-              onLike={() => handleLike(post.id)}
-              onRepost={() => handleRepost(post.id)}
-              onBookmark={() => handleBookmark(post.id)}
-            />
-          ))}
+          {displayedPosts.length > 0 ? (
+            displayedPosts.map(post => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onPress={() => router.push(`/post/${post.id}`)}
+                onLike={() => handleLike(post.id)}
+                onRepost={() => handleRepost(post.id)}
+                onBookmark={() => handleBookmark(post.id)}
+              />
+            ))
+          ) : (
+            <View className="flex-1 items-center justify-center py-20">
+              <Text className="text-zinc-500 dark:text-zinc-400 text-center">
+                No posts from people you follow yet.
+              </Text>
+              <Text className="text-zinc-400 dark:text-zinc-500 text-center text-sm mt-1">
+                Follow more surgeons to see their posts here.
+              </Text>
+            </View>
+          )}
         </ScrollView>
 
         {/* Compose FAB */}
