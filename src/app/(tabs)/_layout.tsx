@@ -1,53 +1,70 @@
 import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
-
+import { Tabs } from 'expo-router';
+import { Home, Search, Bell, User } from 'lucide-react-native';
 import { useColorScheme } from '@/lib/useColorScheme';
-import { useClientOnlyValue } from '@/lib/useClientOnlyValue';
-
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={28} className="-mb-1" {...props} />;
-}
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colorScheme === 'dark' ? 'white' : 'blue',
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+        tabBarActiveTintColor: '#0ea5e9',
+        tabBarInactiveTintColor: isDark ? '#71717a' : '#a1a1aa',
+        tabBarStyle: {
+          backgroundColor: isDark ? '#000' : '#fff',
+          borderTopColor: isDark ? '#27272a' : '#f4f4f5',
+          borderTopWidth: 1,
+          paddingTop: 8,
+          height: 85,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+          marginTop: 4,
+        },
+        headerShown: false,
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }: { color: string }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable className="mr-4 active:opacity-50">
-                <FontAwesome
-                  name="info-circle"
-                  size={25}
-                  color={colorScheme === 'dark' ? 'white' : 'black'}
-                />
-              </Pressable>
-            </Link>
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <Home size={24} color={color} fill={focused ? color : 'transparent'} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="search"
+        options={{
+          title: 'Search',
+          tabBarIcon: ({ color }) => <Search size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Notifications',
+          tabBarIcon: ({ color, focused }) => (
+            <Bell size={24} color={color} fill={focused ? color : 'transparent'} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, focused }) => (
+            <User size={24} color={color} fill={focused ? color : 'transparent'} />
           ),
         }}
       />
       <Tabs.Screen
         name="two"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }: { color: string }) => <TabBarIcon name="code" color={color} />,
+          href: null, // Hide this tab
         }}
       />
     </Tabs>
