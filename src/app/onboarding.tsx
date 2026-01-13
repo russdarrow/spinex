@@ -302,55 +302,89 @@ export default function OnboardingScreen() {
     );
   }
 
+  const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
   return (
-    <View className="flex-1 bg-zinc-950">
+    <View style={{ flex: 1, backgroundColor: '#09090b' }}>
       <Animated.View style={[{ flex: 1 }, slidesStyle]}>
         {/* Slides */}
         <Animated.View
           style={[
-            { flexDirection: 'row', width: SCREEN_WIDTH * slides.length },
+            {
+              flexDirection: 'row',
+              width: SCREEN_WIDTH * slides.length,
+              height: SCREEN_HEIGHT,
+            },
             slidesContainerStyle,
           ]}
         >
           {slides.map((slide) => (
-            <View key={slide.id} style={{ width: SCREEN_WIDTH }} className="flex-1">
-              <LinearGradient
-                colors={slide.gradient as [string, string]}
-                style={{ flex: 1 }}
-              >
-                <SafeAreaView className="flex-1">
-                  <View className="flex-1 justify-center items-center px-8">
-                    {/* Icon Container */}
-                    <View className="w-32 h-32 rounded-full bg-white/20 items-center justify-center mb-8">
-                      {slide.icon}
-                    </View>
-
-                    {/* Title */}
-                    <Text className="text-white text-3xl font-bold text-center mb-4">
-                      {slide.title}
-                    </Text>
-
-                    {/* Subtitle */}
-                    <Text className="text-white/80 text-lg text-center leading-7 px-4">
-                      {slide.subtitle}
-                    </Text>
+            <LinearGradient
+              key={slide.id}
+              colors={slide.gradient as [string, string]}
+              style={{
+                width: SCREEN_WIDTH,
+                height: SCREEN_HEIGHT,
+              }}
+            >
+              <SafeAreaView style={{ flex: 1 }}>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }}>
+                  {/* Icon Container */}
+                  <View
+                    style={{
+                      width: 128,
+                      height: 128,
+                      borderRadius: 64,
+                      backgroundColor: 'rgba(255,255,255,0.2)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 32
+                    }}
+                  >
+                    {slide.icon}
                   </View>
-                </SafeAreaView>
-              </LinearGradient>
-            </View>
+
+                  {/* Title */}
+                  <Text
+                    style={{
+                      color: 'white',
+                      fontSize: 30,
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      marginBottom: 16
+                    }}
+                  >
+                    {slide.title}
+                  </Text>
+
+                  {/* Subtitle */}
+                  <Text
+                    style={{
+                      color: 'rgba(255,255,255,0.8)',
+                      fontSize: 18,
+                      textAlign: 'center',
+                      lineHeight: 28,
+                      paddingHorizontal: 16,
+                    }}
+                  >
+                    {slide.subtitle}
+                  </Text>
+                </View>
+              </SafeAreaView>
+            </LinearGradient>
           ))}
         </Animated.View>
 
         {/* Bottom Controls */}
-        <View className="absolute bottom-0 left-0 right-0 pb-12 px-6">
+        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: 48, paddingHorizontal: 24 }}>
           <SafeAreaView edges={['bottom']}>
             {/* Dots */}
-            <View className="flex-row justify-center mb-8">
+            <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 32 }}>
               {slides.map((_, index) => (
                 <Pressable
                   key={index}
                   onPress={() => goToSlide(index)}
-                  className="p-1"
+                  style={{ padding: 4 }}
                 >
                   <DotIndicator index={index} slideAnim={slideAnim} />
                 </Pressable>
@@ -358,15 +392,20 @@ export default function OnboardingScreen() {
             </View>
 
             {/* Buttons */}
-            <View className="flex-row items-center justify-between">
-              <Pressable onPress={handleSkip} className="py-3 px-4">
-                <Text className="text-white/70 font-medium text-base">Skip</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Pressable onPress={handleSkip} style={{ paddingVertical: 12, paddingHorizontal: 16 }}>
+                <Text style={{ color: 'rgba(255,255,255,0.7)', fontWeight: '500', fontSize: 16 }}>Skip</Text>
               </Pressable>
 
               <Pressable
                 onPress={handleNext}
-                className="bg-white flex-row items-center py-3.5 px-6 rounded-full active:opacity-90"
                 style={{
+                  backgroundColor: 'white',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 14,
+                  paddingHorizontal: 24,
+                  borderRadius: 9999,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 4 },
                   shadowOpacity: 0.15,
@@ -374,7 +413,7 @@ export default function OnboardingScreen() {
                   elevation: 8,
                 }}
               >
-                <Text className="text-zinc-900 font-bold text-base mr-1">
+                <Text style={{ color: '#18181b', fontWeight: 'bold', fontSize: 16, marginRight: 4 }}>
                   {currentIndex === slides.length - 1 ? 'Continue' : 'Next'}
                 </Text>
                 <ChevronRight size={20} color="#18181b" />
