@@ -1,24 +1,46 @@
 # SpineX - Social Network for Spine Surgeons
 
-A Twitter/X-style social media app designed specifically for spine surgeons to share cases, discuss techniques, and connect with colleagues.
+A Twitter/X-style social media app designed for spine surgeons to discuss patient cases, share experiences with medical devices, and connect with colleagues.
 
 ## Features
 
-- **Home Feed**: Browse posts from spine surgeons with "For You" and "Following" tabs
-- **Search & Explore**: Find trending topics in spine surgery and discover other surgeons
-- **Notifications**: Stay updated with likes, reposts, follows, replies, and mentions
-- **Profile**: View and manage your profile, posts, and activity
-- **Compose Posts**: Share your cases and insights with hashtag suggestions
-- **Post Details**: View full posts with replies and engagement stats
+### Core Social Features
+- **Home Feed**: Browse posts with "For You" and "Following" tabs
+- **Search & Explore**: Find trending topics, medical devices, and surgeons
+- **Notifications**: Track likes, reposts, follows, replies, and mentions
+- **Profile**: View and manage your profile and activity
+- **Compose Posts**: Create posts with category selection
+
+### Spine Surgery Specific
+- **Case Discussions**: Share patient cases with diagnosis, procedure, and outcomes
+- **Device Reviews**: Discuss experiences with medical devices (robotics, navigation, implants, biologics)
+- **Research Sharing**: Share and discuss research findings
+- **Q&A**: Ask questions to the spine surgery community
+
+### Medical Device Database
+- Mazor X Stealth, ExcelsiusGPS, ROSA Spine (Robotics)
+- O-arm, Airo Mobile CT (Navigation)
+- PEEK Cages, Titanium Rods, Prestige LP, M6-C Disc (Implants)
+- INFUSE Bone Graft (Biologics)
+
+## Post Categories
+
+| Category | Color | Use Case |
+|----------|-------|----------|
+| Case Discussion | Emerald | Sharing patient cases |
+| Device Review | Violet | Medical device experiences |
+| Research | Amber | Research findings |
+| Question | Blue | Community questions |
+| General | Gray | General discussions |
 
 ## Screens
 
-- `(tabs)/index.tsx` - Home feed with posts
-- `(tabs)/search.tsx` - Search and trending topics
+- `(tabs)/index.tsx` - Home feed with categorized posts
+- `(tabs)/search.tsx` - Search with Trending, Devices, and Surgeons tabs
 - `(tabs)/notifications.tsx` - Notification center
 - `(tabs)/profile.tsx` - User profile
-- `compose.tsx` - Create new posts
-- `post/[id].tsx` - Post detail view
+- `compose.tsx` - Create posts with category/device selection
+- `post/[id].tsx` - Post detail view with replies
 
 ## Tech Stack
 

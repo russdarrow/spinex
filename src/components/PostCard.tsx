@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, Image, Pressable } from 'react-native';
-import { Heart, MessageCircle, Repeat2, Share, Bookmark, BadgeCheck } from 'lucide-react-native';
+import { Heart, MessageCircle, Repeat2, Share, Bookmark, BadgeCheck, Cpu, FileText, FlaskConical, HelpCircle } from 'lucide-react-native';
 import { Post } from '@/lib/types';
-import { formatTimeAgo, formatNumber } from '@/lib/mock-data';
+import { formatTimeAgo, formatNumber, getCategoryColor, getCategoryLabel } from '@/lib/mock-data';
 import { cn } from '@/lib/cn';
 
 interface PostCardProps {
@@ -13,7 +13,25 @@ interface PostCardProps {
   onBookmark?: () => void;
 }
 
+function getCategoryIcon(category: string, color: string) {
+  const size = 12;
+  switch (category) {
+    case 'case':
+      return <FileText size={size} color={color} />;
+    case 'device':
+      return <Cpu size={size} color={color} />;
+    case 'research':
+      return <FlaskConical size={size} color={color} />;
+    case 'question':
+      return <HelpCircle size={size} color={color} />;
+    default:
+      return null;
+  }
+}
+
 export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCardProps) {
+  const categoryColor = getCategoryColor(post.category);
+
   return (
     <Pressable
       onPress={onPress}
@@ -45,8 +63,54 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
             </Text>
           </View>
 
+          {/* Category Badge */}
+          {post.category !== 'general' && (
+            <View className="flex-row items-center mt-1.5">
+              <View
+                className="flex-row items-center px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: `${categoryColor}15` }}
+              >
+                {getCategoryIcon(post.category, categoryColor)}
+                <Text
+                  className="text-[11px] font-medium ml-1"
+                  style={{ color: categoryColor }}
+                >
+                  {getCategoryLabel(post.category)}
+                </Text>
+              </View>
+              {post.deviceMention && (
+                <View className="flex-row items-center ml-2 px-2 py-0.5 bg-violet-100 dark:bg-violet-900/30 rounded-full">
+                  <Cpu size={10} color="#8b5cf6" />
+                  <Text className="text-[11px] font-medium text-violet-600 dark:text-violet-400 ml-1">
+                    {post.deviceMention}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Case Details */}
+          {post.caseDetails && (
+            <View className="mt-2 p-2.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
+              <View className="flex-row items-center mb-1">
+                <Text className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Dx:</Text>
+                <Text className="text-[11px] text-emerald-600 dark:text-emerald-300 ml-1">{post.caseDetails.diagnosis}</Text>
+              </View>
+              <View className="flex-row items-center">
+                <Text className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Procedure:</Text>
+                <Text className="text-[11px] text-emerald-600 dark:text-emerald-300 ml-1">{post.caseDetails.procedure}</Text>
+              </View>
+              {post.caseDetails.outcome && (
+                <View className="flex-row items-center mt-1">
+                  <Text className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Outcome:</Text>
+                  <Text className="text-[11px] text-emerald-600 dark:text-emerald-300 ml-1">{post.caseDetails.outcome}</Text>
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Post Content */}
-          <Text className="text-zinc-900 dark:text-white text-[15px] mt-1 leading-[22px]">
+          <Text className="text-zinc-900 dark:text-white text-[15px] mt-2 leading-[22px]">
             {post.content}
           </Text>
 
@@ -63,7 +127,7 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
 
           {/* Hashtags */}
           {post.hashtags && post.hashtags.length > 0 && (
-            <View className="flex-row flex-wrap mt-1">
+            <View className="flex-row flex-wrap mt-2">
               {post.hashtags.map((tag) => (
                 <Text key={tag} className="text-sky-500 text-[14px] mr-2">
                   #{tag}

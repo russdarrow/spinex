@@ -11,6 +11,8 @@ export interface User {
   isVerified: boolean;
 }
 
+export type PostCategory = 'general' | 'case' | 'device' | 'research' | 'question';
+
 export interface Post {
   id: string;
   author: User;
@@ -25,6 +27,13 @@ export interface Post {
   isBookmarked: boolean;
   createdAt: Date;
   hashtags?: string[];
+  category: PostCategory;
+  deviceMention?: string;
+  caseDetails?: {
+    diagnosis: string;
+    procedure: string;
+    outcome?: string;
+  };
 }
 
 export interface Notification {
@@ -41,4 +50,12 @@ export interface Trend {
   hashtag: string;
   posts: number;
   category: string;
+}
+
+export interface Device {
+  id: string;
+  name: string;
+  manufacturer: string;
+  category: 'implant' | 'instrument' | 'navigation' | 'biologics' | 'robotics';
+  posts: number;
 }

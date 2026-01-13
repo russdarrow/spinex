@@ -1,4 +1,4 @@
-import { User, Post, Notification, Trend } from './types';
+import { User, Post, Notification, Trend, Device } from './types';
 
 export const currentUser: User = {
   id: 'current',
@@ -76,6 +76,19 @@ export const users: User[] = [
   },
 ];
 
+export const devices: Device[] = [
+  { id: '1', name: 'Mazor X Stealth', manufacturer: 'Medtronic', category: 'robotics', posts: 1245 },
+  { id: '2', name: 'ExcelsiusGPS', manufacturer: 'Globus Medical', category: 'robotics', posts: 892 },
+  { id: '3', name: 'ROSA Spine', manufacturer: 'Zimmer Biomet', category: 'robotics', posts: 654 },
+  { id: '4', name: 'O-arm', manufacturer: 'Medtronic', category: 'navigation', posts: 2341 },
+  { id: '5', name: 'Airo Mobile CT', manufacturer: 'Brainlab', category: 'navigation', posts: 567 },
+  { id: '6', name: 'PEEK Cages', manufacturer: 'DePuy Synthes', category: 'implant', posts: 3421 },
+  { id: '7', name: 'Titanium Rods', manufacturer: 'Stryker', category: 'implant', posts: 4521 },
+  { id: '8', name: 'INFUSE Bone Graft', manufacturer: 'Medtronic', category: 'biologics', posts: 1892 },
+  { id: '9', name: 'M6-C Disc', manufacturer: 'Orthofix', category: 'implant', posts: 723 },
+  { id: '10', name: 'Prestige LP', manufacturer: 'Medtronic', category: 'implant', posts: 1456 },
+];
+
 export const posts: Post[] = [
   {
     id: '1',
@@ -91,6 +104,12 @@ export const posts: Post[] = [
     isBookmarked: false,
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
     hashtags: ['SpineDeformity', 'LLIF'],
+    category: 'case',
+    caseDetails: {
+      diagnosis: 'Adult Degenerative Scoliosis',
+      procedure: 'T10-Pelvis Posterior Fusion with LLIF',
+      outcome: 'Excellent correction achieved',
+    },
   },
   {
     id: '2',
@@ -105,6 +124,7 @@ export const posts: Post[] = [
     isBookmarked: true,
     createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
     hashtags: ['CervicalSpine', 'PatientSafety'],
+    category: 'general',
   },
   {
     id: '3',
@@ -119,6 +139,7 @@ export const posts: Post[] = [
     isBookmarked: false,
     createdAt: new Date(Date.now() - 8 * 60 * 60 * 1000),
     hashtags: ['Research', 'SpineSurgery'],
+    category: 'research',
   },
   {
     id: '4',
@@ -134,6 +155,12 @@ export const posts: Post[] = [
     isBookmarked: true,
     createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
     hashtags: ['Scoliosis', 'PediatricSpine'],
+    category: 'case',
+    caseDetails: {
+      diagnosis: 'Adolescent Idiopathic Scoliosis',
+      procedure: 'Posterior Spinal Fusion T4-L1',
+      outcome: '65° to 12° correction',
+    },
   },
   {
     id: '5',
@@ -148,6 +175,7 @@ export const posts: Post[] = [
     isBookmarked: false,
     createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
     hashtags: ['SpineTrauma', 'Tips'],
+    category: 'general',
   },
   {
     id: '6',
@@ -162,11 +190,12 @@ export const posts: Post[] = [
     isBookmarked: false,
     createdAt: new Date(Date.now() - 36 * 60 * 60 * 1000),
     hashtags: ['MIS', 'SpineSurgery'],
+    category: 'question',
   },
   {
     id: '7',
     author: users[1],
-    content: 'NASS 2024 was incredible! Great discussions on AI in spine surgery. The future is here. Who else attended the robotics symposium? #NASS2024 #SpineConference',
+    content: 'First case with the new Mazor X Stealth today. Accuracy was impressive - sub-millimeter precision on pedicle screws. Learning curve is real but the potential is huge. #Robotics #SpineTech',
     likes: 623,
     reposts: 45,
     replies: 98,
@@ -175,7 +204,63 @@ export const posts: Post[] = [
     isReposted: false,
     isBookmarked: false,
     createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000),
-    hashtags: ['NASS2024', 'SpineConference'],
+    hashtags: ['Robotics', 'SpineTech'],
+    category: 'device',
+    deviceMention: 'Mazor X Stealth',
+  },
+  {
+    id: '8',
+    author: users[2],
+    content: 'Has anyone compared outcomes between Prestige LP and M6-C for single-level cervical disc replacement? Looking at options for my next arthroplasty case. #CervicalDisc #DeviceSelection',
+    likes: 289,
+    reposts: 34,
+    replies: 87,
+    views: 5600,
+    isLiked: false,
+    isReposted: false,
+    isBookmarked: true,
+    createdAt: new Date(Date.now() - 52 * 60 * 60 * 1000),
+    hashtags: ['CervicalDisc', 'DeviceSelection'],
+    category: 'question',
+    deviceMention: 'Prestige LP',
+  },
+  {
+    id: '9',
+    author: users[3],
+    content: '3-year follow-up on my first MAGEC rod patient. Growing rod technology has truly transformed how we manage early onset scoliosis. No more repeated lengthening surgeries! #PediatricSpine #MAGEC',
+    likes: 892,
+    reposts: 123,
+    replies: 67,
+    views: 15400,
+    isLiked: false,
+    isReposted: true,
+    isBookmarked: false,
+    createdAt: new Date(Date.now() - 60 * 60 * 60 * 1000),
+    hashtags: ['PediatricSpine', 'MAGEC'],
+    category: 'device',
+    deviceMention: 'MAGEC Rod',
+  },
+  {
+    id: '10',
+    author: users[4],
+    content: 'Using O-arm + navigation for C1-C2 fusion in a patient with os odontoideum. Real-time imaging is invaluable for these complex upper cervical cases. #Navigation #CraniocervicalJunction',
+    images: ['https://images.unsplash.com/photo-1516549655169-df83a0774514?w=600&h=400&fit=crop'],
+    likes: 534,
+    reposts: 78,
+    replies: 45,
+    views: 9800,
+    isLiked: true,
+    isReposted: false,
+    isBookmarked: true,
+    createdAt: new Date(Date.now() - 72 * 60 * 60 * 1000),
+    hashtags: ['Navigation', 'CraniocervicalJunction'],
+    category: 'case',
+    deviceMention: 'O-arm',
+    caseDetails: {
+      diagnosis: 'Os Odontoideum with Atlantoaxial Instability',
+      procedure: 'C1-C2 Posterior Fusion with Navigation',
+      outcome: 'Stable construct, patient neurologically intact',
+    },
   },
 ];
 
@@ -231,11 +316,11 @@ export const notifications: Notification[] = [
 
 export const trends: Trend[] = [
   { id: '1', hashtag: 'SpineDeformity', posts: 2340, category: 'Surgery' },
-  { id: '2', hashtag: 'NASS2024', posts: 8923, category: 'Conference' },
+  { id: '2', hashtag: 'Robotics', posts: 8923, category: 'Devices' },
   { id: '3', hashtag: 'MIS', posts: 4521, category: 'Technique' },
   { id: '4', hashtag: 'CervicalSpine', posts: 3892, category: 'Anatomy' },
-  { id: '5', hashtag: 'SpineResearch', posts: 2100, category: 'Research' },
-  { id: '6', hashtag: 'Robotics', posts: 1890, category: 'Technology' },
+  { id: '5', hashtag: 'Navigation', posts: 2100, category: 'Technology' },
+  { id: '6', hashtag: 'PatientOutcomes', posts: 1890, category: 'Research' },
 ];
 
 export function formatTimeAgo(date: Date): string {
@@ -257,4 +342,34 @@ export function formatNumber(num: number): string {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
   if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
   return num.toString();
+}
+
+export function getCategoryColor(category: string): string {
+  switch (category) {
+    case 'case':
+      return '#10b981'; // emerald
+    case 'device':
+      return '#8b5cf6'; // violet
+    case 'research':
+      return '#f59e0b'; // amber
+    case 'question':
+      return '#3b82f6'; // blue
+    default:
+      return '#71717a'; // zinc
+  }
+}
+
+export function getCategoryLabel(category: string): string {
+  switch (category) {
+    case 'case':
+      return 'Case Discussion';
+    case 'device':
+      return 'Device Review';
+    case 'research':
+      return 'Research';
+    case 'question':
+      return 'Question';
+    default:
+      return 'General';
+  }
 }
