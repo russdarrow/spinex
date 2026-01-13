@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -24,13 +25,16 @@ function useOnboardingCheck() {
   useEffect(() => {
     async function checkOnboarding() {
       try {
+        // Remove this line after testing onboarding:
+        await AsyncStorage.removeItem(ONBOARDING_KEY);
+
         const value = await AsyncStorage.getItem(ONBOARDING_KEY);
         setHasCompletedOnboarding(value === 'true');
       } catch {
         setHasCompletedOnboarding(false);
       } finally {
         setIsLoading(false);
-        SplashScreen.hideAsync();
+        await SplashScreen.hideAsync();
       }
     }
     checkOnboarding();
