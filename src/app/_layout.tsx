@@ -25,12 +25,11 @@ function useOnboardingCheck() {
   useEffect(() => {
     async function checkOnboarding() {
       try {
-        // Remove this line after testing onboarding:
-        await AsyncStorage.removeItem(ONBOARDING_KEY);
-
         const value = await AsyncStorage.getItem(ONBOARDING_KEY);
+        console.log('[Onboarding] Check value:', value);
         setHasCompletedOnboarding(value === 'true');
-      } catch {
+      } catch (e) {
+        console.log('[Onboarding] Error:', e);
         setHasCompletedOnboarding(false);
       } finally {
         setIsLoading(false);
