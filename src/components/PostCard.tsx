@@ -117,11 +117,73 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
           {/* Images */}
           {post.images && post.images.length > 0 && (
             <View className="mt-3 rounded-2xl overflow-hidden">
-              <Image
-                source={{ uri: post.images[0] }}
-                className="w-full h-48"
-                resizeMode="cover"
-              />
+              {post.images.length === 1 ? (
+                <Image
+                  source={{ uri: post.images[0] }}
+                  className="w-full h-48"
+                  resizeMode="cover"
+                />
+              ) : post.images.length === 2 ? (
+                <View className="flex-row">
+                  <Image
+                    source={{ uri: post.images[0] }}
+                    className="flex-1 h-48 mr-0.5"
+                    resizeMode="cover"
+                  />
+                  <Image
+                    source={{ uri: post.images[1] }}
+                    className="flex-1 h-48 ml-0.5"
+                    resizeMode="cover"
+                  />
+                </View>
+              ) : post.images.length === 3 ? (
+                <View className="flex-row">
+                  <Image
+                    source={{ uri: post.images[0] }}
+                    className="flex-1 h-48 mr-0.5"
+                    resizeMode="cover"
+                  />
+                  <View className="flex-1 ml-0.5">
+                    <Image
+                      source={{ uri: post.images[1] }}
+                      className="flex-1 mb-0.5"
+                      resizeMode="cover"
+                    />
+                    <Image
+                      source={{ uri: post.images[2] }}
+                      className="flex-1 mt-0.5"
+                      resizeMode="cover"
+                    />
+                  </View>
+                </View>
+              ) : (
+                <View>
+                  <View className="flex-row">
+                    <Image
+                      source={{ uri: post.images[0] }}
+                      className="flex-1 h-24 mr-0.5"
+                      resizeMode="cover"
+                    />
+                    <Image
+                      source={{ uri: post.images[1] }}
+                      className="flex-1 h-24 ml-0.5"
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <View className="flex-row mt-1">
+                    <Image
+                      source={{ uri: post.images[2] }}
+                      className="flex-1 h-24 mr-0.5"
+                      resizeMode="cover"
+                    />
+                    <Image
+                      source={{ uri: post.images[3] }}
+                      className="flex-1 h-24 ml-0.5"
+                      resizeMode="cover"
+                    />
+                  </View>
+                </View>
+              )}
             </View>
           )}
 

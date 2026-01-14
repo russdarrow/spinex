@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, Pressable, Image, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, Pressable, Image, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { X, ImageIcon, Cpu, FileText, FlaskConical, HelpCircle, ChevronDown, MessageSquare } from 'lucide-react-native';
+import { X, ImageIcon, Cpu, FileText, FlaskConical, HelpCircle, ChevronDown, MessageSquare, XCircle } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { currentUser, devices, getCategoryColor } from '@/lib/mock-data';
 import { PostCategory } from '@/lib/types';
 import { usePostsStore } from '@/lib/posts-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
 const USER_PROFILE_KEY = '@spinex_user_profile';
 
@@ -31,6 +32,7 @@ export default function ComposeScreen() {
   const [procedure, setProcedure] = useState('');
   const [userAvatar, setUserAvatar] = useState(currentUser.avatar);
   const [isPosting, setIsPosting] = useState(false);
+  const [attachedImages, setAttachedImages] = useState<string[]>([]);
 
   // Load user's avatar
   useFocusEffect(
@@ -60,6 +62,71 @@ export default function ComposeScreen() {
   const selectedCategoryData = categories.find(c => c.value === category);
   const categoryColor = getCategoryColor(category);
 
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permission Required',
+        'Please allow access to your photo library to add images to your post.'
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      quality: 0.8,
+      selectionLimit: 4 - attachedImages.length,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      const newImages = result.assets.map(asset => asset.uri);
+      setAttachedImages(prev => [...prev, ...newImages].slice(0, 4));
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permission Required',
+        'Please allow access to your camera to take a photo.'
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setAttachedImages(prev => [...prev, result.assets[0].uri].slice(0, 4));
+    }
+  };
+
+  const showImageOptions = () => {
+    if (attachedImages.length >= 4) {
+      Alert.alert('Limit Reached', 'You can only attach up to 4 images per post.');
+      return;
+    }
+
+    Alert.alert(
+      'Add Image',
+      'Choose an option',
+      [
+        { text: 'Take Photo', onPress: takePhoto },
+        { text: 'Choose from Library', onPress: pickImage },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
+  const removeImage = (index: number) => {
+    setAttachedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handlePost = async () => {
     if (!canPost) return;
 
@@ -69,6 +136,7 @@ export default function ComposeScreen() {
         device: selectedDevice ?? undefined,
         diagnosis: diagnosis || undefined,
         procedure: procedure || undefined,
+        images: attachedImages.length > 0 ? attachedImages : undefined,
       });
       router.back();
     } catch (e) {
@@ -222,13 +290,49 @@ export default function ComposeScreen() {
               />
             </View>
           </View>
+
+          {/* Attached Images */}
+          {attachedImages.length > 0 ? (
+            <View className="px-4 mt-4">
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ flexGrow: 0 }}
+              >
+                {attachedImages.map((imageUri, index) => (
+                  <View key={index} className="mr-3 relative">
+                    <Image
+                      source={{ uri: imageUri }}
+                      className="w-24 h-24 rounded-xl"
+                    />
+                    <Pressable
+                      onPress={() => removeImage(index)}
+                      className="absolute -top-2 -right-2 bg-black/70 rounded-full p-0.5"
+                    >
+                      <XCircle size={20} color="white" fill="black" />
+                    </Pressable>
+                  </View>
+                ))}
+                {attachedImages.length < 4 ? (
+                  <Pressable
+                    onPress={showImageOptions}
+                    className="w-24 h-24 rounded-xl bg-zinc-100 dark:bg-zinc-800 items-center justify-center border-2 border-dashed border-zinc-300 dark:border-zinc-600"
+                  >
+                    <ImageIcon size={24} color="#71717a" />
+                    <Text className="text-zinc-500 text-xs mt-1">Add more</Text>
+                  </Pressable>
+                ) : null}
+              </ScrollView>
+              <Text className="text-zinc-400 text-xs mt-2">{attachedImages.length}/4 images</Text>
+            </View>
+          ) : null}
         </ScrollView>
 
         {/* Bottom Actions */}
         <View className="border-t border-zinc-100 dark:border-zinc-800 px-4 py-3">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
-              <Pressable className="p-2 mr-2">
+              <Pressable onPress={showImageOptions} className="p-2 mr-2">
                 <ImageIcon size={22} color="#0ea5e9" />
               </Pressable>
               <Pressable
