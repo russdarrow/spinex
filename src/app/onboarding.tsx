@@ -302,7 +302,7 @@ export default function OnboardingScreen() {
             {/* Form Card */}
             <View style={{ backgroundColor: '#18181b', borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 24, paddingTop: 32, paddingBottom: 48, minHeight: 500 }}>
               {/* Verified Success State */}
-              {verifiedPhysician && (
+              {verifiedPhysician ? (
                 <View style={{ backgroundColor: '#052e16', borderRadius: 16, padding: 16, marginBottom: 24, flexDirection: 'row', alignItems: 'center' }}>
                   <BadgeCheck size={32} color="#22c55e" />
                   <View style={{ marginLeft: 12, flex: 1 }}>
@@ -311,10 +311,10 @@ export default function OnboardingScreen() {
                     <Text style={{ color: '#86efac', fontSize: 12, marginTop: 2 }}>{verifiedPhysician.specialty}</Text>
                   </View>
                 </View>
-              )}
+              ) : null}
 
               {/* Search Results */}
-              {showSearchResults && searchResults.length > 0 && (
+              {showSearchResults && searchResults.length > 0 ? (
                 <View style={{ marginBottom: 24 }}>
                   <Text style={{ color: 'white', fontWeight: '600', marginBottom: 12 }}>
                     Select your profile:
@@ -333,17 +333,17 @@ export default function OnboardingScreen() {
                     </Pressable>
                   ))}
                 </View>
-              )}
+              ) : null}
 
               {/* Error Message */}
-              {verificationError && !verifiedPhysician && (
+              {verificationError && !verifiedPhysician ? (
                 <View style={{ backgroundColor: '#450a0a', borderRadius: 12, padding: 12, marginBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
                   <AlertCircle size={20} color="#ef4444" />
                   <Text style={{ color: '#fca5a5', marginLeft: 8, flex: 1 }}>{verificationError}</Text>
                 </View>
-              )}
+              ) : null}
 
-              {!verifiedPhysician && !showSearchResults && (
+              {!verifiedPhysician && !showSearchResults ? (
                 <>
                   {/* NPI Input */}
                   <View style={{ marginBottom: 24 }}>
@@ -419,7 +419,7 @@ export default function OnboardingScreen() {
                     )}
                   </Pressable>
                 </>
-              )}
+              ) : null}
 
               {/* Skip Verification */}
               <Pressable
@@ -463,12 +463,12 @@ export default function OnboardingScreen() {
             {/* Form Card */}
             <View style={{ backgroundColor: '#18181b', borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 24, paddingTop: 32, paddingBottom: 48, minHeight: 500 }}>
               {/* Verified Badge */}
-              {verifiedPhysician && (
+              {verifiedPhysician ? (
                 <View style={{ backgroundColor: '#052e16', borderRadius: 12, padding: 12, marginBottom: 20, flexDirection: 'row', alignItems: 'center' }}>
                   <BadgeCheck size={20} color="#22c55e" />
                   <Text style={{ color: '#22c55e', fontWeight: '600', marginLeft: 8 }}>Verified Physician</Text>
                 </View>
-              )}
+              ) : null}
 
               {/* Name Input */}
               <View style={{ marginBottom: 20 }}>
@@ -519,7 +519,7 @@ export default function OnboardingScreen() {
                           borderColor: isSelected ? '#0ea5e9' : '#3f3f46',
                         }}
                       >
-                        {isSelected && <Check size={14} color="white" />}
+                        {isSelected ? <Check size={14} color="white" /> : null}
                         <Text
                           style={{
                             fontSize: 14,
