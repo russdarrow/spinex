@@ -116,9 +116,9 @@ export default function NotificationsScreen() {
                   <Text className="font-semibold text-zinc-900 dark:text-white">
                     {notification.user.name}
                   </Text>
-                  {notification.user.isVerified && (
+                  {notification.user.isVerified ? (
                     <BadgeCheck size={14} color="#0ea5e9" fill="#0ea5e9" className="ml-1" />
-                  )}
+                  ) : null}
                   <Text className="text-zinc-600 dark:text-zinc-300 ml-1">
                     {getNotificationText(notification)}
                   </Text>
@@ -128,30 +128,30 @@ export default function NotificationsScreen() {
                   {formatTimeAgo(notification.createdAt)}
                 </Text>
 
-                {notification.post && (
+                {notification.post ? (
                   <View className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl">
                     <Text className="text-zinc-600 dark:text-zinc-300 text-sm" numberOfLines={2}>
                       {notification.post.content}
                     </Text>
                   </View>
-                )}
+                ) : null}
               </View>
             </View>
 
             {/* Unread indicator */}
-            {!notification.isRead && (
+            {!notification.isRead ? (
               <View className="w-2 h-2 bg-sky-500 rounded-full mt-2" />
-            )}
+            ) : null}
           </Pressable>
         ))}
 
-        {filteredNotifications.length === 0 && (
+        {filteredNotifications.length === 0 ? (
           <View className="py-12 items-center">
             <Text className="text-zinc-500 dark:text-zinc-400 text-center">
               No notifications yet
             </Text>
           </View>
-        )}
+        ) : null}
       </ScrollView>
       </SafeAreaView>
     </View>

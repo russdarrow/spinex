@@ -97,7 +97,7 @@ export default function SearchScreen() {
         </View>
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-          {activeTab === 'trending' && (
+          {activeTab === 'trending' ? (
             <View className="py-2">
               {/* Trending Topics Section */}
               <View className="px-4 py-3">
@@ -145,9 +145,9 @@ export default function SearchScreen() {
                 </View>
               </View>
             </View>
-          )}
+          ) : null}
 
-          {activeTab === 'devices' && (
+          {activeTab === 'devices' ? (
             <View className="py-2">
               <View className="px-4 py-3">
                 <View className="flex-row items-center mb-4">
@@ -218,18 +218,18 @@ export default function SearchScreen() {
                   </Pressable>
                 ))}
 
-                {searchQuery && filteredDevices.length === 0 && (
+                {searchQuery && filteredDevices.length === 0 ? (
                   <View className="py-8 items-center">
                     <Text className="text-zinc-500 dark:text-zinc-400">
                       No devices found for "{searchQuery}"
                     </Text>
                   </View>
-                )}
+                ) : null}
               </View>
             </View>
-          )}
+          ) : null}
 
-          {activeTab === 'surgeons' && (
+          {activeTab === 'surgeons' ? (
             <View className="py-2">
               <View className="px-4 py-3">
                 <Text className="text-lg font-bold text-zinc-900 dark:text-white mb-3">
@@ -250,9 +250,9 @@ export default function SearchScreen() {
                         <Text className="font-semibold text-zinc-900 dark:text-white">
                           {user.name}
                         </Text>
-                        {user.isVerified && (
+                        {user.isVerified ? (
                           <BadgeCheck size={16} color="#0ea5e9" fill="#0ea5e9" className="ml-1" />
-                        )}
+                        ) : null}
                       </View>
                       <Text className="text-zinc-500 dark:text-zinc-400 text-sm">
                         @{user.handle}
@@ -269,16 +269,16 @@ export default function SearchScreen() {
                   </Pressable>
                 ))}
 
-                {searchQuery && filteredUsers.length === 0 && (
+                {searchQuery && filteredUsers.length === 0 ? (
                   <View className="py-8 items-center">
                     <Text className="text-zinc-500 dark:text-zinc-400">
                       No surgeons found for "{searchQuery}"
                     </Text>
                   </View>
-                )}
+                ) : null}
               </View>
             </View>
-          )}
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     </View>

@@ -254,14 +254,14 @@ function ActionButton({ icon, count, isActive, activeColor, onPress }: ActionBut
       className="flex-row items-center active:opacity-50"
     >
       {icon}
-      {count !== undefined && (
+      {count !== undefined ? (
         <Text className={cn(
           'ml-1 text-[13px]',
           isActive ? activeColor : 'text-zinc-500 dark:text-zinc-400'
         )}>
           {formatNumber(count)}
         </Text>
-      )}
+      ) : null}
     </Pressable>
   );
 }
