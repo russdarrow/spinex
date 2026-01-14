@@ -1,6 +1,22 @@
 import { create } from 'zustand';
-import { Post, PostCategory } from './types';
+import { Post, PostCategory, User } from './types';
 import { posts as initialPosts, currentUser } from './mock-data';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const USER_PROFILE_KEY = '@spinex_user_profile';
+
+interface UserProfile {
+  name: string;
+  institution: string;
+  specialties: string[];
+  npi: string | null;
+  isVerified: boolean;
+  credential: string;
+  bio?: string;
+  website?: string;
+  avatar?: string;
+  handle?: string;
+}
 
 interface PostsState {
   posts: Post[];
@@ -9,21 +25,43 @@ interface PostsState {
     diagnosis?: string;
     procedure?: string;
     images?: string[];
-  }) => void;
+  }) => Promise<void>;
   likePost: (postId: string) => void;
   repostPost: (postId: string) => void;
   bookmarkPost: (postId: string) => void;
 }
 
+async function getCurrentUserProfile(): Promise<User> {
+  try {
+    const data = await AsyncStorage.getItem(USER_PROFILE_KEY);
+    if (data) {
+      const profile: UserProfile = JSON.parse(data);
+      return {
+        ...currentUser,
+        name: profile.name || currentUser.name,
+        handle: profile.handle || currentUser.handle,
+        avatar: profile.avatar || currentUser.avatar,
+        bio: profile.bio || currentUser.bio,
+        institution: profile.institution || currentUser.institution,
+        isVerified: profile.isVerified ?? currentUser.isVerified,
+      };
+    }
+  } catch (e) {
+    console.log('Error loading profile for post:', e);
+  }
+  return currentUser;
+}
+
 export const usePostsStore = create<PostsState>((set) => ({
   posts: initialPosts,
 
-  addPost: (content, category, options) => {
+  addPost: async (content, category, options) => {
     const hashtags = content.match(/#\w+/g)?.map(tag => tag.slice(1)) || [];
+    const author = await getCurrentUserProfile();
 
     const newPost: Post = {
       id: `post-${Date.now()}`,
-      author: currentUser,
+      author,
       content,
       category,
       hashtags,

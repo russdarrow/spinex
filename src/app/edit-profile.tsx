@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { X, Check, Camera } from 'lucide-react-native';
+import { X, Check, Camera, AtSign } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { currentUser } from '@/lib/mock-data';
@@ -40,11 +40,13 @@ interface UserProfile {
   bio?: string;
   website?: string;
   avatar?: string;
+  handle?: string;
 }
 
 export default function EditProfileScreen() {
   const router = useRouter();
   const [name, setName] = useState('');
+  const [handle, setHandle] = useState('');
   const [institution, setInstitution] = useState('');
   const [bio, setBio] = useState('');
   const [website, setWebsite] = useState('');
@@ -62,6 +64,7 @@ export default function EditProfileScreen() {
         if (data) {
           const profile: UserProfile = JSON.parse(data);
           setName(profile.name || '');
+          setHandle(profile.handle || currentUser.handle);
           setInstitution(profile.institution || '');
           setSelectedSpecialties(profile.specialties || []);
           setIsVerified(profile.isVerified || false);
@@ -70,6 +73,9 @@ export default function EditProfileScreen() {
           setBio(profile.bio || '');
           setWebsite(profile.website || '');
           setAvatar(profile.avatar);
+        } else {
+          // Default handle from mock data if no profile exists
+          setHandle(currentUser.handle);
         }
       } catch (e) {
         console.log('Error loading profile:', e);
@@ -143,11 +149,22 @@ export default function EditProfileScreen() {
     );
   };
 
+  // Clean handle - remove @ and spaces, lowercase
+  const cleanHandle = (text: string) => {
+    return text.replace(/[@\s]/g, '').toLowerCase();
+  };
+
   const handleSave = async () => {
+    if (!name.trim() || !handle.trim()) {
+      Alert.alert('Required Fields', 'Please enter your name and username.');
+      return;
+    }
+
     setIsSaving(true);
     try {
       const profile: UserProfile = {
         name,
+        handle: cleanHandle(handle),
         institution,
         specialties: selectedSpecialties,
         npi,
@@ -167,6 +184,7 @@ export default function EditProfileScreen() {
   };
 
   const displayAvatar = avatar || currentUser.avatar;
+  const canSave = name.trim().length > 0 && handle.trim().length > 0;
 
   return (
     <View className="flex-1 bg-white dark:bg-black">
@@ -185,9 +203,9 @@ export default function EditProfileScreen() {
             </Text>
             <Pressable
               onPress={handleSave}
-              disabled={isSaving || !name.trim()}
+              disabled={isSaving || !canSave}
               className={`px-4 py-1.5 rounded-full ${
-                name.trim() ? 'bg-sky-500' : 'bg-sky-300'
+                canSave ? 'bg-sky-500' : 'bg-sky-300'
               }`}
             >
               <Text className="text-white font-semibold">
@@ -232,6 +250,30 @@ export default function EditProfileScreen() {
                   placeholderTextColor="#a1a1aa"
                   className="bg-zinc-100 dark:bg-zinc-800 px-4 py-3 rounded-xl text-zinc-900 dark:text-white text-base"
                 />
+              </View>
+
+              {/* Username/Handle */}
+              <View className="mb-5">
+                <Text className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2">
+                  Username
+                </Text>
+                <View className="flex-row items-center bg-zinc-100 dark:bg-zinc-800 rounded-xl">
+                  <View className="pl-4">
+                    <AtSign size={18} color="#71717a" />
+                  </View>
+                  <TextInput
+                    value={handle}
+                    onChangeText={(text) => setHandle(cleanHandle(text))}
+                    placeholder="username"
+                    placeholderTextColor="#a1a1aa"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    className="flex-1 px-2 py-3 text-zinc-900 dark:text-white text-base"
+                  />
+                </View>
+                <Text className="text-xs text-zinc-400 mt-1.5">
+                  This is how others will find and mention you
+                </Text>
               </View>
 
               {/* Institution */}

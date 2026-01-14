@@ -18,6 +18,7 @@ interface UserProfile {
   bio?: string;
   website?: string;
   avatar?: string;
+  handle?: string;
 }
 
 const USER_PROFILE_KEY = '@spinex_user_profile';
@@ -46,6 +47,7 @@ export default function ProfileScreen() {
 
   // Use saved profile name if available, otherwise fallback to mock data
   const displayName = userProfile?.name || currentUser.name;
+  const displayHandle = userProfile?.handle || currentUser.handle;
   const displayInstitution = userProfile?.institution || currentUser.institution;
   const displayBio = userProfile?.bio || currentUser.bio;
   const displayWebsite = userProfile?.website || 'stanford.edu/~schen';
@@ -87,7 +89,7 @@ export default function ProfileScreen() {
                 <BadgeCheck size={20} color="#0ea5e9" fill="#0ea5e9" style={{ marginLeft: 4 }} />
               ) : null}
             </View>
-            <Text className="text-zinc-500 dark:text-zinc-400">@{currentUser.handle}</Text>
+            <Text className="text-zinc-500 dark:text-zinc-400">@{displayHandle}</Text>
             {isVerified && userProfile?.npi ? (
               <View className="flex-row items-center mt-2 bg-emerald-500/10 px-3 py-1.5 rounded-full self-start">
                 <ShieldCheck size={14} color="#10b981" />

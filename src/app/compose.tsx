@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, Pressable, Image, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { X, ImageIcon, Cpu, FileText, FlaskConical, HelpCircle, ChevronDown, MessageSquare } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { currentUser, devices, getCategoryColor } from '@/lib/mock-data';
 import { PostCategory } from '@/lib/types';
 import { usePostsStore } from '@/lib/posts-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const USER_PROFILE_KEY = '@spinex_user_profile';
 
 const categories: { value: PostCategory; label: string; icon: React.ReactNode }[] = [
   { value: 'general', label: 'General', icon: <MessageSquare size={16} color="#71717a" /> },
@@ -25,14 +29,53 @@ export default function ComposeScreen() {
   const [showDevicePicker, setShowDevicePicker] = useState(false);
   const [diagnosis, setDiagnosis] = useState('');
   const [procedure, setProcedure] = useState('');
+  const [userAvatar, setUserAvatar] = useState(currentUser.avatar);
+  const [isPosting, setIsPosting] = useState(false);
+
+  // Load user's avatar
+  useFocusEffect(
+    useCallback(() => {
+      async function loadAvatar() {
+        try {
+          const data = await AsyncStorage.getItem(USER_PROFILE_KEY);
+          if (data) {
+            const profile = JSON.parse(data);
+            if (profile.avatar) {
+              setUserAvatar(profile.avatar);
+            }
+          }
+        } catch (e) {
+          console.log('Error loading avatar:', e);
+        }
+      }
+      loadAvatar();
+    }, [])
+  );
 
   const maxLength = 500;
   const characterCount = content.length;
   const isOverLimit = characterCount > maxLength;
-  const canPost = content.trim().length > 0 && !isOverLimit;
+  const canPost = content.trim().length > 0 && !isOverLimit && !isPosting;
 
   const selectedCategoryData = categories.find(c => c.value === category);
   const categoryColor = getCategoryColor(category);
+
+  const handlePost = async () => {
+    if (!canPost) return;
+
+    setIsPosting(true);
+    try {
+      await addPost(content, category, {
+        device: selectedDevice ?? undefined,
+        diagnosis: diagnosis || undefined,
+        procedure: procedure || undefined,
+      });
+      router.back();
+    } catch (e) {
+      console.log('Error posting:', e);
+      setIsPosting(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-black" edges={['top']}>
@@ -46,20 +89,13 @@ export default function ComposeScreen() {
             <X size={24} color="#71717a" />
           </Pressable>
           <Pressable
-            onPress={() => {
-              if (canPost) {
-                addPost(content, category, {
-                  device: selectedDevice ?? undefined,
-                  diagnosis: diagnosis || undefined,
-                  procedure: procedure || undefined,
-                });
-                router.back();
-              }
-            }}
+            onPress={handlePost}
             className={`px-4 py-1.5 rounded-full ${canPost ? 'bg-sky-500' : 'bg-sky-300'}`}
             disabled={!canPost}
           >
-            <Text className="text-white font-semibold">Post</Text>
+            <Text className="text-white font-semibold">
+              {isPosting ? 'Posting...' : 'Post'}
+            </Text>
           </Pressable>
         </View>
 
@@ -82,7 +118,7 @@ export default function ComposeScreen() {
             </Pressable>
 
             {/* Category Picker Dropdown */}
-            {showCategoryPicker && (
+            {showCategoryPicker ? (
               <View className="mt-2 bg-zinc-50 dark:bg-zinc-800 rounded-xl p-2">
                 {categories.map(cat => (
                   <Pressable
@@ -101,11 +137,11 @@ export default function ComposeScreen() {
                   </Pressable>
                 ))}
               </View>
-            )}
+            ) : null}
           </View>
 
           {/* Device Selector (for device posts) */}
-          {(category === 'device' || category === 'case') && (
+          {(category === 'device' || category === 'case') ? (
             <View className="px-4 mt-3">
               <Pressable
                 onPress={() => setShowDevicePicker(!showDevicePicker)}
@@ -118,7 +154,7 @@ export default function ComposeScreen() {
                 <ChevronDown size={14} color="#8b5cf6" className="ml-1" />
               </Pressable>
 
-              {showDevicePicker && (
+              {showDevicePicker ? (
                 <View className="mt-2 bg-violet-50 dark:bg-violet-900/20 rounded-xl p-2 max-h-48">
                   <ScrollView nestedScrollEnabled style={{ flexGrow: 0 }}>
                     {devices.map(device => (
@@ -136,12 +172,12 @@ export default function ComposeScreen() {
                     ))}
                   </ScrollView>
                 </View>
-              )}
+              ) : null}
             </View>
-          )}
+          ) : null}
 
           {/* Case Details (for case posts) */}
-          {category === 'case' && (
+          {category === 'case' ? (
             <View className="px-4 mt-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl mx-4">
               <Text className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-2">Case Details (optional)</Text>
               <TextInput
@@ -159,12 +195,12 @@ export default function ComposeScreen() {
                 className="bg-white dark:bg-zinc-800 px-3 py-2 rounded-lg text-sm text-zinc-900 dark:text-white"
               />
             </View>
-          )}
+          ) : null}
 
           {/* Compose Area */}
           <View className="flex-row px-4 pt-4">
             <Image
-              source={{ uri: currentUser.avatar }}
+              source={{ uri: userAvatar }}
               className="w-10 h-10 rounded-full"
             />
             <View className="flex-1 ml-3">
@@ -215,7 +251,7 @@ export default function ComposeScreen() {
                     : 'border-zinc-300 dark:border-zinc-600'
                 }`}
               >
-                {characterCount > maxLength * 0.8 && (
+                {characterCount > maxLength * 0.8 ? (
                   <Text
                     className={`text-[10px] font-bold ${
                       isOverLimit ? 'text-red-500' : 'text-amber-500'
@@ -223,7 +259,7 @@ export default function ComposeScreen() {
                   >
                     {maxLength - characterCount}
                   </Text>
-                )}
+                ) : null}
               </View>
             </View>
           </View>
