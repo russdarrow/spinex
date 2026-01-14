@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Image, Pressable, TextInput, Modal, Share as RNShare, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Heart, MessageCircle, Repeat2, Share, Bookmark, BadgeCheck, MoreHorizontal, UserPlus, EyeOff, BarChart3, Flag, AlertTriangle, X } from 'lucide-react-native';
+import { ArrowLeft, Heart, MessageCircle, Repeat2, Share, Bookmark, BadgeCheck, MoreHorizontal, UserPlus, UserMinus, EyeOff, BarChart3, Flag, Trash2, Pin, Sparkles, List, MessageSquare, FileText, Users } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { users, formatTimeAgo, formatNumber, currentUser } from '@/lib/mock-data';
 import { usePostsStore } from '@/lib/posts-store';
+import { useFollowsStore } from '@/lib/follows-store';
 import * as Haptics from 'expo-haptics';
 
 export default function PostDetailScreen() {
@@ -18,10 +19,19 @@ export default function PostDetailScreen() {
   const [reposts, setReposts] = useState(0);
   const [initialized, setInitialized] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+  const [isHighlighted, setIsHighlighted] = useState(false);
 
   const posts = usePostsStore((state) => state.posts);
+  const deletePost = usePostsStore((state) => state.deletePost);
   const post = posts.find(p => p.id === id);
+
+  const toggleFollow = useFollowsStore((state) => state.toggleFollow);
+  const isFollowing = useFollowsStore((state) => state.isFollowing);
+  const isFollowingAuthor = post ? isFollowing(post.author.id) : false;
+
+  // Check if current user is the post author
+  const isOwnPost = post?.author.id === 'current' || post?.author.handle === currentUser.handle;
 
   // Initialize state from post data
   React.useEffect(() => {
@@ -62,7 +72,9 @@ export default function PostDetailScreen() {
 
   const handleFollow = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setIsFollowing(!isFollowing);
+    if (post) {
+      toggleFollow(post.author.id);
+    }
     setShowOptionsMenu(false);
   };
 
@@ -97,6 +109,81 @@ export default function PostDetailScreen() {
     } catch (error) {
       console.log('Error sharing:', error);
     }
+  };
+
+  // Owner-only actions
+  const handleDeletePost = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setShowOptionsMenu(false);
+    Alert.alert(
+      'Delete Post',
+      'Are you sure you want to delete this post? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deletePost(post.id);
+            router.back();
+          },
+        },
+      ]
+    );
+  };
+
+  const handlePinPost = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsPinned(!isPinned);
+    setShowOptionsMenu(false);
+    Alert.alert(isPinned ? 'Unpinned' : 'Pinned', isPinned ? 'Post removed from your profile.' : 'Post pinned to your profile.');
+  };
+
+  const handleHighlights = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsHighlighted(!isHighlighted);
+    setShowOptionsMenu(false);
+    Alert.alert(isHighlighted ? 'Removed from Highlights' : 'Added to Highlights', isHighlighted ? 'Post removed from your highlights.' : 'Post added to your highlights.');
+  };
+
+  const handleAddToList = () => {
+    setShowOptionsMenu(false);
+    Alert.alert('Add to List', 'Choose a list', [
+      { text: 'Interesting Cases', onPress: () => Alert.alert('Added', 'Post added to "Interesting Cases"') },
+      { text: 'Device Reviews', onPress: () => Alert.alert('Added', 'Post added to "Device Reviews"') },
+      { text: 'Research Papers', onPress: () => Alert.alert('Added', 'Post added to "Research Papers"') },
+      { text: 'Create New List', onPress: () => Alert.alert('Coming Soon', 'This feature is coming soon.') },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const handleChangeWhoCanReply = () => {
+    setShowOptionsMenu(false);
+    Alert.alert('Who can reply?', 'Choose who can reply to this post', [
+      { text: 'Everyone', onPress: () => Alert.alert('Updated', 'Everyone can reply to this post.') },
+      { text: 'People you follow', onPress: () => Alert.alert('Updated', 'Only people you follow can reply.') },
+      { text: 'Verified accounts', onPress: () => Alert.alert('Updated', 'Only verified accounts can reply.') },
+      { text: 'Only you', onPress: () => Alert.alert('Updated', 'Only you can reply to this post.') },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const handleViewAnalytics = () => {
+    setShowOptionsMenu(false);
+    Alert.alert(
+      'Post Analytics',
+      `Impressions: ${formatNumber(post.views * 3)}\nEngagements: ${formatNumber(likes + reposts + post.replies)}\nDetail expands: ${formatNumber(Math.floor(post.views * 0.4))}\nProfile visits: ${formatNumber(Math.floor(post.views * 0.1))}\nNew followers: ${formatNumber(Math.floor(post.views * 0.02))}`
+    );
+  };
+
+  const handleRequestCommunityNote = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setShowOptionsMenu(false);
+    Alert.alert(
+      'Request Community Note',
+      'Community Notes add helpful context to posts. Your request has been submitted for review by contributors.',
+      [{ text: 'OK' }]
+    );
   };
 
   // Mock replies
@@ -172,26 +259,104 @@ export default function PostDetailScreen() {
                 </View>
 
                 {/* Menu Options */}
-                <View className="px-4 pb-8">
-                  {/* Follow */}
-                  <Pressable
-                    onPress={handleFollow}
-                    className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
-                  >
-                    <UserPlus size={22} color="#71717a" />
-                    <Text className="flex-1 ml-4 text-base text-zinc-900 dark:text-white">
-                      {isFollowing ? 'Unfollow' : 'Follow'} @{post.author.handle}
-                    </Text>
-                  </Pressable>
+                <ScrollView className="px-4 pb-8" style={{ maxHeight: 500 }}>
+                  {/* Owner-only options */}
+                  {isOwnPost ? (
+                    <>
+                      {/* Delete */}
+                      <Pressable
+                        onPress={handleDeletePost}
+                        className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                      >
+                        <Trash2 size={22} color="#ef4444" />
+                        <Text className="flex-1 ml-4 text-base text-red-500">
+                          Delete post
+                        </Text>
+                      </Pressable>
 
-                  {/* Not Interested */}
+                      {/* Pin to profile */}
+                      <Pressable
+                        onPress={handlePinPost}
+                        className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                      >
+                        <Pin size={22} color="#71717a" />
+                        <Text className="flex-1 ml-4 text-base text-zinc-900 dark:text-white">
+                          {isPinned ? 'Unpin from profile' : 'Pin to your profile'}
+                        </Text>
+                      </Pressable>
+
+                      {/* Highlights */}
+                      <Pressable
+                        onPress={handleHighlights}
+                        className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                      >
+                        <Sparkles size={22} color="#71717a" />
+                        <Text className="flex-1 ml-4 text-base text-zinc-900 dark:text-white">
+                          {isHighlighted ? 'Remove from Highlights' : 'Add to Highlights'}
+                        </Text>
+                      </Pressable>
+
+                      {/* Change who can reply */}
+                      <Pressable
+                        onPress={handleChangeWhoCanReply}
+                        className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                      >
+                        <MessageSquare size={22} color="#71717a" />
+                        <Text className="flex-1 ml-4 text-base text-zinc-900 dark:text-white">
+                          Change who can reply
+                        </Text>
+                      </Pressable>
+
+                      {/* View Analytics */}
+                      <Pressable
+                        onPress={handleViewAnalytics}
+                        className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                      >
+                        <BarChart3 size={22} color="#71717a" />
+                        <Text className="flex-1 ml-4 text-base text-zinc-900 dark:text-white">
+                          View post analytics
+                        </Text>
+                      </Pressable>
+                    </>
+                  ) : (
+                    <>
+                      {/* Follow - only show for other users' posts */}
+                      <Pressable
+                        onPress={handleFollow}
+                        className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                      >
+                        {isFollowingAuthor ? (
+                          <UserMinus size={22} color="#71717a" />
+                        ) : (
+                          <UserPlus size={22} color="#71717a" />
+                        )}
+                        <Text className="flex-1 ml-4 text-base text-zinc-900 dark:text-white">
+                          {isFollowingAuthor ? 'Unfollow' : 'Follow'} @{post.author.handle}
+                        </Text>
+                      </Pressable>
+
+                      {/* Not Interested */}
+                      <Pressable
+                        onPress={handleNotInterested}
+                        className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                      >
+                        <EyeOff size={22} color="#71717a" />
+                        <Text className="flex-1 ml-4 text-base text-zinc-900 dark:text-white">
+                          Not interested in this post
+                        </Text>
+                      </Pressable>
+                    </>
+                  )}
+
+                  {/* Common options for all posts */}
+                  {/* Add to List */}
                   <Pressable
-                    onPress={handleNotInterested}
+                    onPress={handleAddToList}
                     className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
                   >
-                    <EyeOff size={22} color="#71717a" />
+                    <List size={22} color="#71717a" />
                     <Text className="flex-1 ml-4 text-base text-zinc-900 dark:text-white">
-                      Not interested in this post
+                      Add/remove from Lists
                     </Text>
                   </Pressable>
 
@@ -217,16 +382,31 @@ export default function PostDetailScreen() {
                     </Text>
                   </Pressable>
 
-                  {/* Report */}
-                  <Pressable
-                    onPress={handleReport}
-                    className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
-                  >
-                    <Flag size={22} color="#ef4444" />
-                    <Text className="flex-1 ml-4 text-base text-red-500">
-                      Report post
-                    </Text>
-                  </Pressable>
+                  {/* Request Community Note - only for others' posts */}
+                  {!isOwnPost ? (
+                    <Pressable
+                      onPress={handleRequestCommunityNote}
+                      className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                    >
+                      <Users size={22} color="#71717a" />
+                      <Text className="flex-1 ml-4 text-base text-zinc-900 dark:text-white">
+                        Request Community Note
+                      </Text>
+                    </Pressable>
+                  ) : null}
+
+                  {/* Report - only for others' posts */}
+                  {!isOwnPost ? (
+                    <Pressable
+                      onPress={handleReport}
+                      className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                    >
+                      <Flag size={22} color="#ef4444" />
+                      <Text className="flex-1 ml-4 text-base text-red-500">
+                        Report post
+                      </Text>
+                    </Pressable>
+                  ) : null}
 
                   {/* Cancel */}
                   <Pressable
@@ -237,7 +417,7 @@ export default function PostDetailScreen() {
                       Cancel
                     </Text>
                   </Pressable>
-                </View>
+                </ScrollView>
               </Pressable>
             </Pressable>
           </Modal>

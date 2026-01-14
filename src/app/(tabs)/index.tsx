@@ -6,6 +6,7 @@ import { Pencil } from 'lucide-react-native';
 import { PostCard } from '@/components/PostCard';
 import { currentUser } from '@/lib/mock-data';
 import { usePostsStore } from '@/lib/posts-store';
+import { useFollowsStore } from '@/lib/follows-store';
 
 export default function FeedScreen() {
   const router = useRouter();
@@ -13,11 +14,9 @@ export default function FeedScreen() {
   const likePost = usePostsStore((s) => s.likePost);
   const repostPost = usePostsStore((s) => s.repostPost);
   const bookmarkPost = usePostsStore((s) => s.bookmarkPost);
+  const followingIds = useFollowsStore((s) => s.followingIds);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'forYou' | 'following'>('forYou');
-
-  // Simulated "following" - users[0] and users[2] are followed
-  const followingIds = ['1', '3'];
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

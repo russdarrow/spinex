@@ -33,6 +33,7 @@ interface PostsState {
   likePost: (postId: string) => void;
   repostPost: (postId: string) => void;
   bookmarkPost: (postId: string) => void;
+  deletePost: (postId: string) => void;
 }
 
 async function getCurrentUserProfile(): Promise<User> {
@@ -131,6 +132,12 @@ export const usePostsStore = create<PostsState>()(
               ? { ...post, isBookmarked: !post.isBookmarked }
               : post
           ),
+        }));
+      },
+
+      deletePost: (postId) => {
+        set((state) => ({
+          posts: state.posts.filter((post) => post.id !== postId),
         }));
       },
     }),
