@@ -4,12 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
 import { PostCard } from '@/components/PostCard';
-import { posts as initialPosts, currentUser, users } from '@/lib/mock-data';
-import { Post } from '@/lib/types';
+import { currentUser } from '@/lib/mock-data';
+import { usePostsStore } from '@/lib/posts-store';
 
 export default function FeedScreen() {
   const router = useRouter();
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const posts = usePostsStore((s) => s.posts);
+  const likePost = usePostsStore((s) => s.likePost);
+  const repostPost = usePostsStore((s) => s.repostPost);
+  const bookmarkPost = usePostsStore((s) => s.bookmarkPost);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'forYou' | 'following'>('forYou');
 
@@ -22,36 +25,6 @@ export default function FeedScreen() {
       setRefreshing(false);
     }, 1000);
   }, []);
-
-  const handleLike = (postId: string) => {
-    setPosts(prev =>
-      prev.map(p =>
-        p.id === postId
-          ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 }
-          : p
-      )
-    );
-  };
-
-  const handleRepost = (postId: string) => {
-    setPosts(prev =>
-      prev.map(p =>
-        p.id === postId
-          ? { ...p, isReposted: !p.isReposted, reposts: p.isReposted ? p.reposts - 1 : p.reposts + 1 }
-          : p
-      )
-    );
-  };
-
-  const handleBookmark = (postId: string) => {
-    setPosts(prev =>
-      prev.map(p =>
-        p.id === postId
-          ? { ...p, isBookmarked: !p.isBookmarked }
-          : p
-      )
-    );
-  };
 
   // Filter posts based on active tab
   const displayedPosts = activeTab === 'following'
@@ -108,9 +81,9 @@ export default function FeedScreen() {
                 key={post.id}
                 post={post}
                 onPress={() => router.push(`/post/${post.id}`)}
-                onLike={() => handleLike(post.id)}
-                onRepost={() => handleRepost(post.id)}
-                onBookmark={() => handleBookmark(post.id)}
+                onLike={() => likePost(post.id)}
+                onRepost={() => repostPost(post.id)}
+                onBookmark={() => bookmarkPost(post.id)}
               />
             ))
           ) : (

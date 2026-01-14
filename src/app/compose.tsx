@@ -3,8 +3,9 @@ import { View, Text, TextInput, Pressable, Image, KeyboardAvoidingView, Platform
 import { useRouter } from 'expo-router';
 import { X, ImageIcon, Cpu, FileText, FlaskConical, HelpCircle, ChevronDown, MessageSquare } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { currentUser, devices, getCategoryColor, getCategoryLabel } from '@/lib/mock-data';
+import { currentUser, devices, getCategoryColor } from '@/lib/mock-data';
 import { PostCategory } from '@/lib/types';
+import { usePostsStore } from '@/lib/posts-store';
 
 const categories: { value: PostCategory; label: string; icon: React.ReactNode }[] = [
   { value: 'general', label: 'General', icon: <MessageSquare size={16} color="#71717a" /> },
@@ -16,6 +17,7 @@ const categories: { value: PostCategory; label: string; icon: React.ReactNode }[
 
 export default function ComposeScreen() {
   const router = useRouter();
+  const addPost = usePostsStore((s) => s.addPost);
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<PostCategory>('general');
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
@@ -46,6 +48,11 @@ export default function ComposeScreen() {
           <Pressable
             onPress={() => {
               if (canPost) {
+                addPost(content, category, {
+                  device: selectedDevice ?? undefined,
+                  diagnosis: diagnosis || undefined,
+                  procedure: procedure || undefined,
+                });
                 router.back();
               }
             }}
