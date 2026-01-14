@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Image, Pressable, TextInput } from 'react-native';
+import { View, Text, ScrollView, Image, Pressable, TextInput, Modal, Share as RNShare, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Heart, MessageCircle, Repeat2, Share, Bookmark, BadgeCheck, MoreHorizontal } from 'lucide-react-native';
+import { ArrowLeft, Heart, MessageCircle, Repeat2, Share, Bookmark, BadgeCheck, MoreHorizontal, UserPlus, EyeOff, BarChart3, Flag, AlertTriangle, X } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { users, formatTimeAgo, formatNumber, currentUser } from '@/lib/mock-data';
 import { usePostsStore } from '@/lib/posts-store';
+import * as Haptics from 'expo-haptics';
 
 export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -16,6 +17,8 @@ export default function PostDetailScreen() {
   const [likes, setLikes] = useState(0);
   const [reposts, setReposts] = useState(0);
   const [initialized, setInitialized] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const posts = usePostsStore((state) => state.posts);
   const post = posts.find(p => p.id === id);
@@ -41,13 +44,59 @@ export default function PostDetailScreen() {
   }
 
   const handleLike = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsLiked(!isLiked);
     setLikes(prev => isLiked ? prev - 1 : prev + 1);
   };
 
   const handleRepost = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsReposted(!isReposted);
     setReposts(prev => isReposted ? prev - 1 : prev + 1);
+  };
+
+  const handleOpenOptions = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setShowOptionsMenu(true);
+  };
+
+  const handleFollow = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsFollowing(!isFollowing);
+    setShowOptionsMenu(false);
+  };
+
+  const handleNotInterested = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setShowOptionsMenu(false);
+    Alert.alert('Got it', "You'll see fewer posts like this.");
+  };
+
+  const handleViewEngagements = () => {
+    setShowOptionsMenu(false);
+    Alert.alert('Post Engagements', `${formatNumber(likes)} likes\n${formatNumber(reposts)} reposts\n${formatNumber(post.views)} views\n${post.replies} replies`);
+  };
+
+  const handleReport = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setShowOptionsMenu(false);
+    Alert.alert('Report Post', 'Why are you reporting this post?', [
+      { text: 'Spam', onPress: () => Alert.alert('Thanks', 'Your report has been submitted.') },
+      { text: 'Misinformation', onPress: () => Alert.alert('Thanks', 'Your report has been submitted.') },
+      { text: 'Harassment', onPress: () => Alert.alert('Thanks', 'Your report has been submitted.') },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const handleSharePost = async () => {
+    setShowOptionsMenu(false);
+    try {
+      await RNShare.share({
+        message: `Check out this post by @${post.author.handle}: "${post.content.substring(0, 100)}..."`,
+      });
+    } catch (error) {
+      console.log('Error sharing:', error);
+    }
   };
 
   // Mock replies
@@ -98,10 +147,100 @@ export default function PostDetailScreen() {
               </View>
               <Text className="text-zinc-500 dark:text-zinc-400">@{post.author.handle}</Text>
             </View>
-            <Pressable className="p-2">
+            <Pressable onPress={handleOpenOptions} className="p-2">
               <MoreHorizontal size={20} color="#71717a" />
             </Pressable>
           </View>
+
+          {/* Options Menu Modal */}
+          <Modal
+            visible={showOptionsMenu}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowOptionsMenu(false)}
+          >
+            <Pressable
+              className="flex-1 bg-black/50 justify-end"
+              onPress={() => setShowOptionsMenu(false)}
+            >
+              <Pressable
+                className="bg-white dark:bg-zinc-900 rounded-t-3xl"
+                onPress={(e) => e.stopPropagation()}
+              >
+                <View className="items-center pt-3 pb-2">
+                  <View className="w-10 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full" />
+                </View>
+
+                {/* Menu Options */}
+                <View className="px-4 pb-8">
+                  {/* Follow */}
+                  <Pressable
+                    onPress={handleFollow}
+                    className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                  >
+                    <UserPlus size={22} color="#71717a" />
+                    <Text className="flex-1 ml-4 text-base text-zinc-900 dark:text-white">
+                      {isFollowing ? 'Unfollow' : 'Follow'} @{post.author.handle}
+                    </Text>
+                  </Pressable>
+
+                  {/* Not Interested */}
+                  <Pressable
+                    onPress={handleNotInterested}
+                    className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                  >
+                    <EyeOff size={22} color="#71717a" />
+                    <Text className="flex-1 ml-4 text-base text-zinc-900 dark:text-white">
+                      Not interested in this post
+                    </Text>
+                  </Pressable>
+
+                  {/* View Engagements */}
+                  <Pressable
+                    onPress={handleViewEngagements}
+                    className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                  >
+                    <BarChart3 size={22} color="#71717a" />
+                    <Text className="flex-1 ml-4 text-base text-zinc-900 dark:text-white">
+                      View post engagements
+                    </Text>
+                  </Pressable>
+
+                  {/* Share */}
+                  <Pressable
+                    onPress={handleSharePost}
+                    className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                  >
+                    <Share size={22} color="#71717a" />
+                    <Text className="flex-1 ml-4 text-base text-zinc-900 dark:text-white">
+                      Share post
+                    </Text>
+                  </Pressable>
+
+                  {/* Report */}
+                  <Pressable
+                    onPress={handleReport}
+                    className="flex-row items-center py-4 border-b border-zinc-100 dark:border-zinc-800"
+                  >
+                    <Flag size={22} color="#ef4444" />
+                    <Text className="flex-1 ml-4 text-base text-red-500">
+                      Report post
+                    </Text>
+                  </Pressable>
+
+                  {/* Cancel */}
+                  <Pressable
+                    onPress={() => setShowOptionsMenu(false)}
+                    className="flex-row items-center justify-center py-4 mt-2 bg-zinc-100 dark:bg-zinc-800 rounded-xl"
+                  >
+                    <Text className="text-base font-semibold text-zinc-900 dark:text-white">
+                      Cancel
+                    </Text>
+                  </Pressable>
+                </View>
+              </Pressable>
+            </Pressable>
+          </Modal>
 
           {/* Content */}
           <Text className="text-lg text-zinc-900 dark:text-white mt-4 leading-6">
