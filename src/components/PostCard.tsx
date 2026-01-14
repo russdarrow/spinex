@@ -51,9 +51,9 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
             <Text className="font-semibold text-zinc-900 dark:text-white text-[15px]">
               {post.author.name}
             </Text>
-            {post.author.isVerified && (
+            {post.author.isVerified ? (
               <BadgeCheck size={16} color="#0ea5e9" fill="#0ea5e9" className="ml-1" />
-            )}
+            ) : null}
             <Text className="text-zinc-500 dark:text-zinc-400 text-[14px] ml-1">
               @{post.author.handle}
             </Text>
@@ -64,7 +64,7 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
           </View>
 
           {/* Category Badge */}
-          {post.category !== 'general' && (
+          {post.category !== 'general' ? (
             <View className="flex-row items-center mt-1.5">
               <View
                 className="flex-row items-center px-2 py-0.5 rounded-full"
@@ -87,10 +87,10 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
                 </View>
               ) : null}
             </View>
-          )}
+          ) : null}
 
           {/* Case Details */}
-          {post.caseDetails && (
+          {post.caseDetails ? (
             <View className="mt-2 p-2.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
               <View className="flex-row items-center mb-1">
                 <Text className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Dx:</Text>
@@ -107,7 +107,7 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
                 </View>
               ) : null}
             </View>
-          )}
+          ) : null}
 
           {/* Post Content */}
           <Text className="text-zinc-900 dark:text-white text-[15px] mt-2 leading-[22px]">
@@ -115,7 +115,7 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
           </Text>
 
           {/* Images */}
-          {post.images && post.images.length > 0 && (
+          {post.images && post.images.length > 0 ? (
             <View className="mt-3 rounded-2xl overflow-hidden">
               {post.images.length === 1 ? (
                 <Image
@@ -185,10 +185,10 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
                 </View>
               )}
             </View>
-          )}
+          ) : null}
 
           {/* Hashtags */}
-          {post.hashtags && post.hashtags.length > 0 && (
+          {post.hashtags && post.hashtags.length > 0 ? (
             <View className="flex-row flex-wrap mt-2">
               {post.hashtags.map((tag) => (
                 <Text key={tag} className="text-sky-500 text-[14px] mr-2">
@@ -196,7 +196,7 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
                 </Text>
               ))}
             </View>
-          )}
+          ) : null}
 
           {/* Actions */}
           <View className="flex-row items-center justify-between mt-3 pr-8">
