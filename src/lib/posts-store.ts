@@ -138,15 +138,27 @@ export const usePostsStore = create<PostsState>()(
       name: POSTS_STORAGE_KEY,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ posts: state.posts }),
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
-        // Convert date strings back to Date objects after rehydration
-        if (state?.posts) {
-          state.posts = state.posts.map(post => ({
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as { posts?: Post[] } | undefined;
+        if (persisted?.posts) {
+          // Convert date strings back to Date objects
+          const hydratedPosts = persisted.posts.map(post => ({
             ...post,
             createdAt: new Date(post.createdAt),
           }));
+          return {
+            ...currentState,
+            posts: hydratedPosts,
+            _hasHydrated: true,
+          };
         }
+        return {
+          ...currentState,
+          _hasHydrated: true,
+        };
+      },
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
       },
     }
   )
