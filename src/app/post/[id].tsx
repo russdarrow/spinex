@@ -92,9 +92,9 @@ export default function PostDetailScreen() {
                 <Text className="font-semibold text-zinc-900 dark:text-white">
                   {post.author.name}
                 </Text>
-                {post.author.isVerified && (
+                {post.author.isVerified ? (
                   <BadgeCheck size={16} color="#0ea5e9" fill="#0ea5e9" className="ml-1" />
-                )}
+                ) : null}
               </View>
               <Text className="text-zinc-500 dark:text-zinc-400">@{post.author.handle}</Text>
             </View>
@@ -109,7 +109,7 @@ export default function PostDetailScreen() {
           </Text>
 
           {/* Images */}
-          {post.images && post.images.length > 0 && (
+          {post.images && post.images.length > 0 ? (
             <View className="mt-4 rounded-2xl overflow-hidden">
               {post.images.length === 1 ? (
                 <Image
@@ -179,7 +179,7 @@ export default function PostDetailScreen() {
                 </View>
               )}
             </View>
-          )}
+          ) : null}
 
           {/* Timestamp */}
           <View className="flex-row items-center mt-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
@@ -242,9 +242,9 @@ export default function PostDetailScreen() {
                     <Text className="font-semibold text-zinc-900 dark:text-white">
                       {reply.author.name}
                     </Text>
-                    {reply.author.isVerified && (
+                    {reply.author.isVerified ? (
                       <BadgeCheck size={14} color="#0ea5e9" fill="#0ea5e9" className="ml-1" />
-                    )}
+                    ) : null}
                     <Text className="text-zinc-500 dark:text-zinc-400 ml-1">
                       @{reply.author.handle}
                     </Text>
