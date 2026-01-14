@@ -182,7 +182,7 @@ export default function ComposeScreen() {
               >
                 {selectedCategoryData?.label}
               </Text>
-              <ChevronDown size={14} color={category !== 'general' ? categoryColor : '#71717a'} className="ml-1" />
+              <ChevronDown size={14} color={category !== 'general' ? categoryColor : '#71717a'} style={{ marginLeft: 4 }} />
             </Pressable>
 
             {/* Category Picker Dropdown */}
@@ -219,7 +219,7 @@ export default function ComposeScreen() {
                 <Text className="ml-1.5 text-sm font-medium text-violet-600 dark:text-violet-400">
                   {selectedDevice || 'Select Device'}
                 </Text>
-                <ChevronDown size={14} color="#8b5cf6" className="ml-1" />
+                <ChevronDown size={14} color="#8b5cf6" style={{ marginLeft: 4 }} />
               </Pressable>
 
               {showDevicePicker ? (

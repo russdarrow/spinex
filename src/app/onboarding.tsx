@@ -328,7 +328,7 @@ export default function OnboardingScreen() {
                       <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>{physician.name}</Text>
                       <Text style={{ color: '#a1a1aa', fontSize: 14, marginTop: 2 }}>{physician.specialty}</Text>
                       <Text style={{ color: '#71717a', fontSize: 12, marginTop: 4 }}>
-                        NPI: {physician.npi} • {physician.city}, {physician.state}
+                        NPI: {physician.npi} - {physician.city}, {physician.state}
                       </Text>
                     </Pressable>
                   ))}

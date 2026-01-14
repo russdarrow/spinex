@@ -114,7 +114,7 @@ export default function SearchScreen() {
                     className="py-3 border-b border-zinc-100 dark:border-zinc-800 active:bg-zinc-50 dark:active:bg-zinc-800/50"
                   >
                     <Text className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {trend.category} · Trending
+                      {trend.category} - Trending
                     </Text>
                     <Text className="text-base font-semibold text-zinc-900 dark:text-white mt-0.5">
                       #{trend.hashtag}
@@ -251,7 +251,7 @@ export default function SearchScreen() {
                           {user.name}
                         </Text>
                         {user.isVerified ? (
-                          <BadgeCheck size={16} color="#0ea5e9" fill="#0ea5e9" className="ml-1" />
+                          <BadgeCheck size={16} color="#0ea5e9" fill="#0ea5e9" style={{ marginLeft: 4 }} />
                         ) : null}
                       </View>
                       <Text className="text-zinc-500 dark:text-zinc-400 text-sm">

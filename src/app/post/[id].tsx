@@ -93,7 +93,7 @@ export default function PostDetailScreen() {
                   {post.author.name}
                 </Text>
                 {post.author.isVerified ? (
-                  <BadgeCheck size={16} color="#0ea5e9" fill="#0ea5e9" className="ml-1" />
+                  <BadgeCheck size={16} color="#0ea5e9" fill="#0ea5e9" style={{ marginLeft: 4 }} />
                 ) : null}
               </View>
               <Text className="text-zinc-500 dark:text-zinc-400">@{post.author.handle}</Text>
@@ -186,7 +186,7 @@ export default function PostDetailScreen() {
             <Text className="text-zinc-500 dark:text-zinc-400">
               {post.createdAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
             </Text>
-            <Text className="text-zinc-400 mx-1">·</Text>
+            <Text className="text-zinc-400 mx-1">-</Text>
             <Text className="text-zinc-500 dark:text-zinc-400">
               {post.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </Text>
@@ -243,12 +243,12 @@ export default function PostDetailScreen() {
                       {reply.author.name}
                     </Text>
                     {reply.author.isVerified ? (
-                      <BadgeCheck size={14} color="#0ea5e9" fill="#0ea5e9" className="ml-1" />
+                      <BadgeCheck size={14} color="#0ea5e9" fill="#0ea5e9" style={{ marginLeft: 4 }} />
                     ) : null}
                     <Text className="text-zinc-500 dark:text-zinc-400 ml-1">
                       @{reply.author.handle}
                     </Text>
-                    <Text className="text-zinc-400 mx-1">·</Text>
+                    <Text className="text-zinc-400 mx-1">-</Text>
                     <Text className="text-zinc-500 dark:text-zinc-400">
                       {formatTimeAgo(reply.createdAt)}
                     </Text>

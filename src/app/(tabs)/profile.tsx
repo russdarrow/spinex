@@ -94,7 +94,7 @@ export default function ProfileScreen() {
               <View className="flex-row items-center mt-2 bg-emerald-500/10 px-3 py-1.5 rounded-full self-start">
                 <ShieldCheck size={14} color="#10b981" />
                 <Text className="text-emerald-600 dark:text-emerald-400 text-xs font-medium ml-1">
-                  Verified Physician • NPI {userProfile.npi}
+                  Verified Physician - NPI {userProfile.npi}
                 </Text>
               </View>
             ) : null}

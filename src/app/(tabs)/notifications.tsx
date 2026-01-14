@@ -117,7 +117,7 @@ export default function NotificationsScreen() {
                     {notification.user.name}
                   </Text>
                   {notification.user.isVerified ? (
-                    <BadgeCheck size={14} color="#0ea5e9" fill="#0ea5e9" className="ml-1" />
+                    <BadgeCheck size={14} color="#0ea5e9" fill="#0ea5e9" style={{ marginLeft: 4 }} />
                   ) : null}
                   <Text className="text-zinc-600 dark:text-zinc-300 ml-1">
                     {getNotificationText(notification)}

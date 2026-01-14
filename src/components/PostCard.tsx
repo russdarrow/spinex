@@ -52,12 +52,12 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
               {post.author.name}
             </Text>
             {post.author.isVerified ? (
-              <BadgeCheck size={16} color="#0ea5e9" fill="#0ea5e9" className="ml-1" />
+              <BadgeCheck size={16} color="#0ea5e9" fill="#0ea5e9" style={{ marginLeft: 4 }} />
             ) : null}
             <Text className="text-zinc-500 dark:text-zinc-400 text-[14px] ml-1">
               @{post.author.handle}
             </Text>
-            <Text className="text-zinc-400 dark:text-zinc-500 text-[14px] mx-1">·</Text>
+            <Text className="text-zinc-400 dark:text-zinc-500 text-[14px] mx-1">-</Text>
             <Text className="text-zinc-500 dark:text-zinc-400 text-[14px]">
               {formatTimeAgo(post.createdAt)}
             </Text>
