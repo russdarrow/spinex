@@ -75,14 +75,14 @@ export default function ProfileScreen() {
               )}
             </View>
             <Text className="text-zinc-500 dark:text-zinc-400">@{currentUser.handle}</Text>
-            {isVerified && userProfile?.npi && (
+            {isVerified && userProfile?.npi ? (
               <View className="flex-row items-center mt-2 bg-emerald-500/10 px-3 py-1.5 rounded-full self-start">
                 <ShieldCheck size={14} color="#10b981" />
                 <Text className="text-emerald-600 dark:text-emerald-400 text-xs font-medium ml-1">
                   Verified Physician • NPI {userProfile.npi}
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
 
           {/* Bio */}
@@ -91,7 +91,7 @@ export default function ProfileScreen() {
           </Text>
 
           {/* Specialties */}
-          {userProfile?.specialties && userProfile.specialties.length > 0 && (
+          {userProfile?.specialties && userProfile.specialties.length > 0 ? (
             <View className="flex-row flex-wrap mt-3">
               {userProfile.specialties.map((specialty) => (
                 <View key={specialty} className="bg-sky-500/10 px-2.5 py-1 rounded-full mr-2 mb-1">
@@ -99,7 +99,7 @@ export default function ProfileScreen() {
                 </View>
               ))}
             </View>
-          )}
+          ) : null}
 
           {/* Details */}
           <View className="flex-row flex-wrap mt-3">

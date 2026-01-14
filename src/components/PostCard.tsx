@@ -78,14 +78,14 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
                   {getCategoryLabel(post.category)}
                 </Text>
               </View>
-              {post.deviceMention && (
+              {post.deviceMention ? (
                 <View className="flex-row items-center ml-2 px-2 py-0.5 bg-violet-100 dark:bg-violet-900/30 rounded-full">
                   <Cpu size={10} color="#8b5cf6" />
                   <Text className="text-[11px] font-medium text-violet-600 dark:text-violet-400 ml-1">
                     {post.deviceMention}
                   </Text>
                 </View>
-              )}
+              ) : null}
             </View>
           )}
 
@@ -100,12 +100,12 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
                 <Text className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Procedure:</Text>
                 <Text className="text-[11px] text-emerald-600 dark:text-emerald-300 ml-1">{post.caseDetails.procedure}</Text>
               </View>
-              {post.caseDetails.outcome && (
+              {post.caseDetails.outcome ? (
                 <View className="flex-row items-center mt-1">
                   <Text className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">Outcome:</Text>
                   <Text className="text-[11px] text-emerald-600 dark:text-emerald-300 ml-1">{post.caseDetails.outcome}</Text>
                 </View>
-              )}
+              ) : null}
             </View>
           )}
 
