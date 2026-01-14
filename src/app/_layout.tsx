@@ -25,10 +25,6 @@ function useOnboardingCheck() {
   useEffect(() => {
     async function checkOnboarding() {
       try {
-        // TEMP: Clear onboarding to test as new user - remove after testing
-        await AsyncStorage.removeItem(ONBOARDING_KEY);
-        await AsyncStorage.removeItem('@spinex_user_profile');
-
         const value = await AsyncStorage.getItem(ONBOARDING_KEY);
         console.log('[Onboarding] Check value:', value);
         setHasCompletedOnboarding(value === 'true');
