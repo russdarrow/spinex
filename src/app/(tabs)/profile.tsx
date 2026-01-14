@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MapPin, Calendar, Link as LinkIcon, BadgeCheck, Grid3X3, Bookmark, ShieldCheck } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { currentUser, posts, formatNumber } from '@/lib/mock-data';
 import { PostCard } from '@/components/PostCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,6 +15,8 @@ interface UserProfile {
   npi: string | null;
   isVerified: boolean;
   credential: string;
+  bio?: string;
+  website?: string;
 }
 
 const USER_PROFILE_KEY = '@spinex_user_profile';
@@ -23,23 +26,28 @@ export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<'posts' | 'replies' | 'media' | 'likes'>('posts');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        const data = await AsyncStorage.getItem(USER_PROFILE_KEY);
-        if (data) {
-          setUserProfile(JSON.parse(data));
+  // Reload profile data every time the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      async function loadProfile() {
+        try {
+          const data = await AsyncStorage.getItem(USER_PROFILE_KEY);
+          if (data) {
+            setUserProfile(JSON.parse(data));
+          }
+        } catch (e) {
+          console.log('Error loading profile:', e);
         }
-      } catch (e) {
-        console.log('Error loading profile:', e);
       }
-    }
-    loadProfile();
-  }, []);
+      loadProfile();
+    }, [])
+  );
 
   // Use saved profile name if available, otherwise fallback to mock data
   const displayName = userProfile?.name || currentUser.name;
   const displayInstitution = userProfile?.institution || currentUser.institution;
+  const displayBio = userProfile?.bio || currentUser.bio;
+  const displayWebsite = userProfile?.website || 'stanford.edu/~schen';
   const isVerified = userProfile?.isVerified ?? currentUser.isVerified;
 
   const userPosts = posts.filter(p => p.isLiked || p.isBookmarked).slice(0, 3);
@@ -59,7 +67,10 @@ export default function ProfileScreen() {
               source={{ uri: currentUser.avatar }}
               className="w-24 h-24 rounded-full border-4 border-white dark:border-black"
             />
-            <Pressable className="border border-zinc-300 dark:border-zinc-600 px-4 py-1.5 rounded-full mb-2">
+            <Pressable
+              onPress={() => router.push('/edit-profile')}
+              className="border border-zinc-300 dark:border-zinc-600 px-4 py-1.5 rounded-full mb-2 active:bg-zinc-100 dark:active:bg-zinc-800"
+            >
               <Text className="font-semibold text-zinc-900 dark:text-white text-sm">Edit profile</Text>
             </Pressable>
           </View>
@@ -70,9 +81,9 @@ export default function ProfileScreen() {
               <Text className="text-xl font-bold text-zinc-900 dark:text-white">
                 {displayName}
               </Text>
-              {isVerified && (
-                <BadgeCheck size={20} color="#0ea5e9" fill="#0ea5e9" className="ml-1" />
-              )}
+              {isVerified ? (
+                <BadgeCheck size={20} color="#0ea5e9" fill="#0ea5e9" style={{ marginLeft: 4 }} />
+              ) : null}
             </View>
             <Text className="text-zinc-500 dark:text-zinc-400">@{currentUser.handle}</Text>
             {isVerified && userProfile?.npi ? (
@@ -87,7 +98,7 @@ export default function ProfileScreen() {
 
           {/* Bio */}
           <Text className="text-zinc-900 dark:text-white mt-3 leading-5">
-            {currentUser.bio}
+            {displayBio}
           </Text>
 
           {/* Specialties */}
@@ -109,12 +120,14 @@ export default function ProfileScreen() {
                 {displayInstitution}
               </Text>
             </View>
-            <View className="flex-row items-center mr-4 mb-1">
-              <LinkIcon size={14} color="#71717a" />
-              <Text className="text-sky-500 text-sm ml-1">
-                stanford.edu/~schen
-              </Text>
-            </View>
+            {displayWebsite ? (
+              <View className="flex-row items-center mr-4 mb-1">
+                <LinkIcon size={14} color="#71717a" />
+                <Text className="text-sky-500 text-sm ml-1">
+                  {displayWebsite}
+                </Text>
+              </View>
+            ) : null}
             <View className="flex-row items-center mb-1">
               <Calendar size={14} color="#71717a" />
               <Text className="text-zinc-500 dark:text-zinc-400 text-sm ml-1">
@@ -156,7 +169,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Content */}
-        {activeTab === 'posts' && (
+        {activeTab === 'posts' ? (
           <View>
             {userPosts.length > 0 ? (
               userPosts.map(post => (
@@ -175,27 +188,27 @@ export default function ProfileScreen() {
               </View>
             )}
           </View>
-        )}
+        ) : null}
 
-        {activeTab === 'replies' && (
+        {activeTab === 'replies' ? (
           <View className="py-12 items-center">
             <Text className="text-zinc-500 dark:text-zinc-400">No replies yet</Text>
           </View>
-        )}
+        ) : null}
 
-        {activeTab === 'media' && (
+        {activeTab === 'media' ? (
           <View className="py-12 items-center">
             <Grid3X3 size={48} color="#71717a" />
             <Text className="text-zinc-500 dark:text-zinc-400 mt-4">No media yet</Text>
           </View>
-        )}
+        ) : null}
 
-        {activeTab === 'likes' && (
+        {activeTab === 'likes' ? (
           <View className="py-12 items-center">
             <Bookmark size={48} color="#71717a" />
             <Text className="text-zinc-500 dark:text-zinc-400 mt-4">No likes yet</Text>
           </View>
-        )}
+        ) : null}
       </ScrollView>
       </SafeAreaView>
     </View>
