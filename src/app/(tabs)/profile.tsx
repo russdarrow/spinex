@@ -17,6 +17,7 @@ interface UserProfile {
   credential: string;
   bio?: string;
   website?: string;
+  avatar?: string;
 }
 
 const USER_PROFILE_KEY = '@spinex_user_profile';
@@ -48,6 +49,7 @@ export default function ProfileScreen() {
   const displayInstitution = userProfile?.institution || currentUser.institution;
   const displayBio = userProfile?.bio || currentUser.bio;
   const displayWebsite = userProfile?.website || 'stanford.edu/~schen';
+  const displayAvatar = userProfile?.avatar || currentUser.avatar;
   const isVerified = userProfile?.isVerified ?? currentUser.isVerified;
 
   const userPosts = posts.filter(p => p.isLiked || p.isBookmarked).slice(0, 3);
@@ -64,7 +66,7 @@ export default function ProfileScreen() {
           {/* Avatar & Edit Button */}
           <View className="flex-row justify-between items-end">
             <Image
-              source={{ uri: currentUser.avatar }}
+              source={{ uri: displayAvatar }}
               className="w-24 h-24 rounded-full border-4 border-white dark:border-black"
             />
             <Pressable

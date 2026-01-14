@@ -7,11 +7,15 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { X, Check } from 'lucide-react-native';
+import { X, Check, Camera } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
+import { currentUser } from '@/lib/mock-data';
 
 const USER_PROFILE_KEY = '@spinex_user_profile';
 
@@ -35,6 +39,7 @@ interface UserProfile {
   credential: string;
   bio?: string;
   website?: string;
+  avatar?: string;
 }
 
 export default function EditProfileScreen() {
@@ -43,6 +48,7 @@ export default function EditProfileScreen() {
   const [institution, setInstitution] = useState('');
   const [bio, setBio] = useState('');
   const [website, setWebsite] = useState('');
+  const [avatar, setAvatar] = useState<string | undefined>(undefined);
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [isVerified, setIsVerified] = useState(false);
   const [npi, setNpi] = useState<string | null>(null);
@@ -63,6 +69,7 @@ export default function EditProfileScreen() {
           setCredential(profile.credential || '');
           setBio(profile.bio || '');
           setWebsite(profile.website || '');
+          setAvatar(profile.avatar);
         }
       } catch (e) {
         console.log('Error loading profile:', e);
@@ -70,6 +77,63 @@ export default function EditProfileScreen() {
     }
     loadProfile();
   }, []);
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permission Required',
+        'Please allow access to your photo library to change your profile picture.'
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setAvatar(result.assets[0].uri);
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permission Required',
+        'Please allow access to your camera to take a profile picture.'
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setAvatar(result.assets[0].uri);
+    }
+  };
+
+  const showImageOptions = () => {
+    Alert.alert(
+      'Change Profile Photo',
+      'Choose an option',
+      [
+        { text: 'Take Photo', onPress: takePhoto },
+        { text: 'Choose from Library', onPress: pickImage },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
 
   const toggleSpecialty = (specialty: string) => {
     setSelectedSpecialties(prev =>
@@ -91,6 +155,7 @@ export default function EditProfileScreen() {
         credential,
         bio,
         website,
+        avatar,
       };
       await AsyncStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
       router.back();
@@ -100,6 +165,8 @@ export default function EditProfileScreen() {
       setIsSaving(false);
     }
   };
+
+  const displayAvatar = avatar || currentUser.avatar;
 
   return (
     <View className="flex-1 bg-white dark:bg-black">
@@ -134,6 +201,24 @@ export default function EditProfileScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
+            {/* Profile Photo */}
+            <View className="items-center py-6 border-b border-zinc-100 dark:border-zinc-800">
+              <Pressable onPress={showImageOptions} className="relative">
+                <Image
+                  source={{ uri: displayAvatar }}
+                  className="w-24 h-24 rounded-full"
+                />
+                <View className="absolute bottom-0 right-0 w-8 h-8 bg-sky-500 rounded-full items-center justify-center border-2 border-white dark:border-black">
+                  <Camera size={16} color="white" />
+                </View>
+              </Pressable>
+              <Pressable onPress={showImageOptions} className="mt-3">
+                <Text className="text-sky-500 font-semibold">
+                  Change Profile Photo
+                </Text>
+              </Pressable>
+            </View>
+
             <View className="px-4 py-6">
               {/* Name */}
               <View className="mb-5">
@@ -214,9 +299,9 @@ export default function EditProfileScreen() {
                             : 'bg-zinc-100 dark:bg-zinc-800'
                         }`}
                       >
-                        {isSelected && (
+                        {isSelected ? (
                           <Check size={14} color="white" style={{ marginRight: 4 }} />
-                        )}
+                        ) : null}
                         <Text
                           className={`text-sm font-medium ${
                             isSelected
