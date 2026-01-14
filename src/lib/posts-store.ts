@@ -1,9 +1,11 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { Post, PostCategory, User } from './types';
 import { posts as initialPosts, currentUser } from './mock-data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const USER_PROFILE_KEY = '@spinex_user_profile';
+const POSTS_STORAGE_KEY = '@spinex_posts';
 
 interface UserProfile {
   name: string;
@@ -20,6 +22,8 @@ interface UserProfile {
 
 interface PostsState {
   posts: Post[];
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
   addPost: (content: string, category: PostCategory, options?: {
     device?: string;
     diagnosis?: string;
@@ -52,77 +56,98 @@ async function getCurrentUserProfile(): Promise<User> {
   return currentUser;
 }
 
-export const usePostsStore = create<PostsState>((set) => ({
-  posts: initialPosts,
+export const usePostsStore = create<PostsState>()(
+  persist(
+    (set) => ({
+      posts: initialPosts,
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
-  addPost: async (content, category, options) => {
-    const hashtags = content.match(/#\w+/g)?.map(tag => tag.slice(1)) || [];
-    const author = await getCurrentUserProfile();
+      addPost: async (content, category, options) => {
+        const hashtags = content.match(/#\w+/g)?.map(tag => tag.slice(1)) || [];
+        const author = await getCurrentUserProfile();
 
-    const newPost: Post = {
-      id: `post-${Date.now()}`,
-      author,
-      content,
-      category,
-      hashtags,
-      likes: 0,
-      reposts: 0,
-      replies: 0,
-      views: 0,
-      isLiked: false,
-      isReposted: false,
-      isBookmarked: false,
-      createdAt: new Date(),
-      ...(options?.device && { deviceMention: options.device }),
-      ...(options?.images && { images: options.images }),
-      ...((options?.diagnosis || options?.procedure) && {
-        caseDetails: {
-          diagnosis: options.diagnosis || '',
-          procedure: options.procedure || '',
-        },
-      }),
-    };
+        const newPost: Post = {
+          id: `post-${Date.now()}`,
+          author,
+          content,
+          category,
+          hashtags,
+          likes: 0,
+          reposts: 0,
+          replies: 0,
+          views: 0,
+          isLiked: false,
+          isReposted: false,
+          isBookmarked: false,
+          createdAt: new Date(),
+          ...(options?.device && { deviceMention: options.device }),
+          ...(options?.images && { images: options.images }),
+          ...((options?.diagnosis || options?.procedure) && {
+            caseDetails: {
+              diagnosis: options.diagnosis || '',
+              procedure: options.procedure || '',
+            },
+          }),
+        };
 
-    set((state) => ({
-      posts: [newPost, ...state.posts],
-    }));
-  },
+        set((state) => ({
+          posts: [newPost, ...state.posts],
+        }));
+      },
 
-  likePost: (postId) => {
-    set((state) => ({
-      posts: state.posts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              isLiked: !post.isLiked,
-              likes: post.isLiked ? post.likes - 1 : post.likes + 1,
-            }
-          : post
-      ),
-    }));
-  },
+      likePost: (postId) => {
+        set((state) => ({
+          posts: state.posts.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  isLiked: !post.isLiked,
+                  likes: post.isLiked ? post.likes - 1 : post.likes + 1,
+                }
+              : post
+          ),
+        }));
+      },
 
-  repostPost: (postId) => {
-    set((state) => ({
-      posts: state.posts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              isReposted: !post.isReposted,
-              reposts: post.isReposted ? post.reposts - 1 : post.reposts + 1,
-            }
-          : post
-      ),
-    }));
-  },
+      repostPost: (postId) => {
+        set((state) => ({
+          posts: state.posts.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  isReposted: !post.isReposted,
+                  reposts: post.isReposted ? post.reposts - 1 : post.reposts + 1,
+                }
+              : post
+          ),
+        }));
+      },
 
-  bookmarkPost: (postId) => {
-    set((state) => ({
-      posts: state.posts.map((post) =>
-        post.id === postId
-          ? { ...post, isBookmarked: !post.isBookmarked }
-          : post
-      ),
-    }));
-  },
-}));
+      bookmarkPost: (postId) => {
+        set((state) => ({
+          posts: state.posts.map((post) =>
+            post.id === postId
+              ? { ...post, isBookmarked: !post.isBookmarked }
+              : post
+          ),
+        }));
+      },
+    }),
+    {
+      name: POSTS_STORAGE_KEY,
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({ posts: state.posts }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+        // Convert date strings back to Date objects after rehydration
+        if (state?.posts) {
+          state.posts = state.posts.map(post => ({
+            ...post,
+            createdAt: new Date(post.createdAt),
+          }));
+        }
+      },
+    }
+  )
+);
