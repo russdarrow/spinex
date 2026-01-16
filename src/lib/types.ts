@@ -13,11 +13,19 @@ export interface User {
 
 export type PostCategory = 'general' | 'case' | 'device' | 'research' | 'question';
 
+export interface MediaItem {
+  uri: string;
+  type: 'image' | 'video';
+  aspectRatio?: number; // width / height for proper display
+  thumbnailUri?: string; // for video thumbnails
+}
+
 export interface Post {
   id: string;
   author: User;
   content: string;
   images?: string[];
+  media?: MediaItem[]; // New: supports both images and videos with aspect ratios
   likes: number;
   reposts: number;
   replies: number;

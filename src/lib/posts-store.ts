@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Post, PostCategory, User } from './types';
+import { Post, PostCategory, User, MediaItem } from './types';
 import { posts as initialPosts, currentUser } from './mock-data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -29,6 +29,7 @@ interface PostsState {
     diagnosis?: string;
     procedure?: string;
     images?: string[];
+    media?: MediaItem[];
   }) => Promise<void>;
   likePost: (postId: string) => void;
   repostPost: (postId: string) => void;
@@ -84,6 +85,7 @@ export const usePostsStore = create<PostsState>()(
           createdAt: new Date(),
           ...(options?.device && { deviceMention: options.device }),
           ...(options?.images && { images: options.images }),
+          ...(options?.media && { media: options.media }),
           ...((options?.diagnosis || options?.procedure) && {
             caseDetails: {
               diagnosis: options.diagnosis || '',
