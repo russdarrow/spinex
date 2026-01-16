@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Image, Pressable, TextInput, Modal, Share as RNShare, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Modal, Share as RNShare, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Heart, MessageCircle, Repeat2, Share, Bookmark, BadgeCheck, MoreHorizontal, UserPlus, UserMinus, EyeOff, BarChart3, Flag, Trash2, Pin, Sparkles, List, MessageSquare, FileText, Users } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { users, formatTimeAgo, formatNumber, currentUser } from '@/lib/mock-data';
 import { usePostsStore } from '@/lib/posts-store';
 import { useFollowsStore } from '@/lib/follows-store';
+import { MediaGallery } from '@/components/MediaGallery';
 import * as Haptics from 'expo-haptics';
 
 export default function PostDetailScreen() {
@@ -221,7 +223,7 @@ export default function PostDetailScreen() {
           <View className="flex-row items-center">
             <Image
               source={{ uri: post.author.avatar }}
-              className="w-12 h-12 rounded-full"
+              style={{ width: 48, height: 48, borderRadius: 24 }}
             />
             <View className="ml-3 flex-1">
               <View className="flex-row items-center">
@@ -427,78 +429,8 @@ export default function PostDetailScreen() {
             {post.content}
           </Text>
 
-          {/* Images */}
-          {post.images && post.images.length > 0 ? (
-            <View className="mt-4 rounded-2xl overflow-hidden">
-              {post.images.length === 1 ? (
-                <Image
-                  source={{ uri: post.images[0] }}
-                  className="w-full h-64"
-                  resizeMode="cover"
-                />
-              ) : post.images.length === 2 ? (
-                <View className="flex-row h-64">
-                  <Image
-                    source={{ uri: post.images[0] }}
-                    className="flex-1 mr-0.5"
-                    resizeMode="cover"
-                  />
-                  <Image
-                    source={{ uri: post.images[1] }}
-                    className="flex-1 ml-0.5"
-                    resizeMode="cover"
-                  />
-                </View>
-              ) : post.images.length === 3 ? (
-                <View className="flex-row h-64">
-                  <Image
-                    source={{ uri: post.images[0] }}
-                    className="flex-1 mr-0.5"
-                    resizeMode="cover"
-                  />
-                  <View className="flex-1 ml-0.5">
-                    <Image
-                      source={{ uri: post.images[1] }}
-                      className="flex-1 mb-0.5"
-                      resizeMode="cover"
-                    />
-                    <Image
-                      source={{ uri: post.images[2] }}
-                      className="flex-1 mt-0.5"
-                      resizeMode="cover"
-                    />
-                  </View>
-                </View>
-              ) : (
-                <View className="h-64">
-                  <View className="flex-row flex-1">
-                    <Image
-                      source={{ uri: post.images[0] }}
-                      className="flex-1 mr-0.5"
-                      resizeMode="cover"
-                    />
-                    <Image
-                      source={{ uri: post.images[1] }}
-                      className="flex-1 ml-0.5"
-                      resizeMode="cover"
-                    />
-                  </View>
-                  <View className="flex-row flex-1 mt-1">
-                    <Image
-                      source={{ uri: post.images[2] }}
-                      className="flex-1 mr-0.5"
-                      resizeMode="cover"
-                    />
-                    <Image
-                      source={{ uri: post.images[3] }}
-                      className="flex-1 ml-0.5"
-                      resizeMode="cover"
-                    />
-                  </View>
-                </View>
-              )}
-            </View>
-          ) : null}
+          {/* Media Gallery */}
+          <MediaGallery post={post} isDetailView />
 
           {/* Timestamp */}
           <View className="flex-row items-center mt-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
@@ -554,7 +486,7 @@ export default function PostDetailScreen() {
               <View className="flex-row">
                 <Image
                   source={{ uri: reply.author.avatar }}
-                  className="w-10 h-10 rounded-full"
+                  style={{ width: 40, height: 40, borderRadius: 20 }}
                 />
                 <View className="flex-1 ml-3">
                   <View className="flex-row items-center">
@@ -592,7 +524,7 @@ export default function PostDetailScreen() {
       <View className="flex-row items-center px-4 py-3 border-t border-zinc-100 dark:border-zinc-800">
         <Image
           source={{ uri: currentUser.avatar }}
-          className="w-8 h-8 rounded-full"
+          style={{ width: 32, height: 32, borderRadius: 16 }}
         />
         <TextInput
           value={replyText}
