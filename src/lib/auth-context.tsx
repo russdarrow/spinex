@@ -1,6 +1,28 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { supabase, isSupabaseConfigured } from './supabase';
-import { Session, User } from '@supabase/supabase-js';
+import { createClient, Session, User, SupabaseClient } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import 'react-native-url-polyfill/auto';
+
+// Get credentials
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+
+// Check if configured
+const isConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+
+// Create client only if configured
+let supabaseClient: SupabaseClient | null = null;
+
+if (isConfigured) {
+  supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      storage: AsyncStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
+  });
+}
 
 interface AuthContextType {
   user: User | null;
@@ -18,18 +40,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const isConfigured = isSupabaseConfigured();
 
   useEffect(() => {
     // Skip if Supabase is not configured
-    if (!isConfigured) {
+    if (!isConfigured || !supabaseClient) {
       console.log('[Auth] Supabase not configured, skipping auth initialization');
       setIsLoading(false);
       return;
     }
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -39,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
@@ -48,14 +69,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
-  }, [isConfigured]);
+  }, []);
 
   const signUp = async (email: string, password: string) => {
-    if (!isConfigured) {
+    if (!isConfigured || !supabaseClient) {
       return { error: new Error('Supabase is not configured. Please add your credentials in the ENV tab.') };
     }
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await supabaseClient.auth.signUp({
         email,
         password,
       });
@@ -66,11 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    if (!isConfigured) {
+    if (!isConfigured || !supabaseClient) {
       return { error: new Error('Supabase is not configured. Please add your credentials in the ENV tab.') };
     }
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabaseClient.auth.signInWithPassword({
         email,
         password,
       });
@@ -81,8 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    if (!isConfigured) return;
-    await supabase.auth.signOut();
+    if (!isConfigured || !supabaseClient) return;
+    await supabaseClient.auth.signOut();
   };
 
   return (
