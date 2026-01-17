@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AuthProvider, useAuth } from '@/lib/auth-context';
 
 const ONBOARDING_KEY = '@spinex_onboarding_complete';
 
@@ -61,6 +62,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="login" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="signup" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="compose" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="edit-profile" options={{ presentation: 'modal', headerShown: false }} />
@@ -76,12 +79,14 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <KeyboardProvider>
-          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-          <RootLayoutNav colorScheme={colorScheme} />
-        </KeyboardProvider>
-      </GestureHandlerRootView>
+      <AuthProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <KeyboardProvider>
+            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+            <RootLayoutNav colorScheme={colorScheme} />
+          </KeyboardProvider>
+        </GestureHandlerRootView>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

@@ -56,3 +56,72 @@ A Twitter/X-style social media app designed for spine surgeons to discuss patien
 - NativeWind (TailwindCSS)
 - Lucide React Native icons
 - React Query for state management
+- Supabase for authentication and database
+
+## Supabase Integration
+
+### Authentication
+The app includes full user authentication via Supabase:
+- Sign up with email/password
+- Sign in with email/password
+- Sign out
+- Session persistence
+
+**Files:**
+- `src/lib/auth-context.tsx` - Auth provider and `useAuth` hook
+- `src/app/login.tsx` - Login screen
+- `src/app/signup.tsx` - Sign up screen
+
+**Usage:**
+```tsx
+import { useAuth } from '@/lib/auth-context';
+
+const { user, signIn, signUp, signOut, isLoading } = useAuth();
+```
+
+### Database Hooks
+Custom hooks for Supabase database operations with React Query:
+
+**Files:**
+- `src/lib/supabase.ts` - Supabase client
+- `src/lib/supabase-hooks.ts` - Database hooks
+
+**Available hooks:**
+```tsx
+import {
+  useSupabaseQuery,
+  useSupabaseInsert,
+  useSupabaseUpdate,
+  useSupabaseDelete,
+  useSupabaseRealtime,
+  useSupabaseRealtimeQuery
+} from '@/lib/supabase-hooks';
+
+// Fetch data
+const { data, isLoading } = useSupabaseQuery('table_name', {
+  select: '*',
+  filter: { column: 'user_id', value: userId },
+  orderBy: { column: 'created_at', ascending: false },
+  limit: 10
+});
+
+// Insert data
+const insertMutation = useSupabaseInsert('table_name');
+insertMutation.mutate({ title: 'New item' });
+
+// Update data
+const updateMutation = useSupabaseUpdate('table_name');
+updateMutation.mutate({ id: 'item-id', updates: { title: 'Updated' } });
+
+// Delete data
+const deleteMutation = useSupabaseDelete('table_name');
+deleteMutation.mutate('item-id');
+
+// Real-time updates (auto-refreshes query when data changes)
+const { data } = useSupabaseRealtimeQuery('table_name');
+```
+
+### Environment Variables
+Add these in the ENV tab:
+- `EXPO_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anon/public key
