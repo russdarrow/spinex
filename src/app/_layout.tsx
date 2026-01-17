@@ -1,5 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { useEffect, useState } from 'react';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -9,7 +8,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AuthProvider, useAuth } from '@/lib/auth-context';
 
 const ONBOARDING_KEY = '@spinex_onboarding_complete';
 
@@ -79,14 +77,12 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <KeyboardProvider>
-            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-            <RootLayoutNav colorScheme={colorScheme} />
-          </KeyboardProvider>
-        </GestureHandlerRootView>
-      </AuthProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <KeyboardProvider>
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+          <RootLayoutNav colorScheme={colorScheme} />
+        </KeyboardProvider>
+      </GestureHandlerRootView>
     </QueryClientProvider>
   );
 }

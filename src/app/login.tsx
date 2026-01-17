@@ -2,13 +2,30 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/lib/auth-context';
+import { createClient } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import 'react-native-url-polyfill/auto';
+
+// Create Supabase client
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+const isConfigured = Boolean(supabaseUrl && supabaseAnonKey);
+
+const supabase = isConfigured
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        storage: AsyncStorage,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+      },
+    })
+  : null;
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,16 +39,29 @@ export default function LoginScreen() {
       return;
     }
 
+    if (!isConfigured || !supabase) {
+      setError('Supabase is not configured. Please add your credentials in the ENV tab.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
-    const { error } = await signIn(email, password);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(error.message);
+        setIsLoading(false);
+      } else {
+        router.replace('/(tabs)');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
       setIsLoading(false);
-    } else {
-      router.replace('/(tabs)');
     }
   };
 
