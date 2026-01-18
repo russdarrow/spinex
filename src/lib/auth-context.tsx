@@ -18,7 +18,7 @@ if (isConfigured) {
     auth: {
       storage: AsyncStorage,
       autoRefreshToken: true,
-      persistSession: true,
+      persistSession: false, // HIPAA: Don't persist sessions - require login each time
       detectSessionInUrl: false,
     },
   });
@@ -49,22 +49,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Get initial session
-    supabaseClient.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    }).catch((error) => {
-      console.error('[Auth] Error getting session:', error);
-      setIsLoading(false);
-    });
+    // HIPAA Compliance: Always sign out on app start to require fresh login
+    const initAuth = async () => {
+      try {
+        // Sign out any existing session for HIPAA compliance
+        await supabaseClient.auth.signOut();
+        console.log('[Auth] Cleared any existing session (HIPAA compliance)');
+        setSession(null);
+        setUser(null);
+      } catch (error) {
+        console.error('[Auth] Error clearing session:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        setIsLoading(false);
       }
     );
 

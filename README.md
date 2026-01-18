@@ -65,7 +65,7 @@ The app includes full user authentication via Supabase:
 - Sign up with email/password
 - Sign in with email/password
 - Sign out
-- Session persistence
+- **HIPAA Compliance**: Sessions are NOT persisted - users must log in each time they open the app
 
 **Files:**
 - `src/lib/auth-context.tsx` - Auth provider and `useAuth` hook
@@ -78,6 +78,12 @@ import { useAuth } from '@/lib/auth-context';
 
 const { user, signIn, signUp, signOut, isLoading } = useAuth();
 ```
+
+### Security Notes (HIPAA)
+- Sessions are cleared on app start
+- No session persistence to storage
+- Users must authenticate on each app launch
+- This prevents unauthorized access if a device is lost or shared
 
 ### Database Hooks
 Custom hooks for Supabase database operations with React Query:
