@@ -45,7 +45,6 @@ function useOnboardingCheck() {
 
     const inOnboarding = segments[0] === 'onboarding';
     const inAuth = segments[0] === 'login' || segments[0] === 'signup';
-    const inProtectedRoute = segments[0] === '(tabs)' || segments[0] === 'compose' || segments[0] === 'edit-profile' || segments[0] === 'post';
 
     // First check onboarding
     if (!hasCompletedOnboarding && !inOnboarding) {
@@ -53,19 +52,19 @@ function useOnboardingCheck() {
       return;
     }
 
-    // If onboarding complete, check auth (only if Supabase is configured)
-    if (hasCompletedOnboarding && isConfigured) {
-      if (!user && !inAuth && !inOnboarding) {
-        // Not logged in, redirect to login
-        router.replace('/login');
-      } else if (user && inAuth) {
-        // Logged in but on auth screen, go to main app
-        router.replace('/(tabs)');
-      }
-    } else if (hasCompletedOnboarding && !isConfigured && inOnboarding) {
-      // Supabase not configured, just go to tabs after onboarding
+    // TESTING MODE: Skip auth check, go straight to tabs after onboarding
+    if (hasCompletedOnboarding && inOnboarding) {
       router.replace('/(tabs)');
     }
+
+    // TODO: Re-enable auth check for production
+    // if (hasCompletedOnboarding && isConfigured) {
+    //   if (!user && !inAuth && !inOnboarding) {
+    //     router.replace('/login');
+    //   } else if (user && inAuth) {
+    //     router.replace('/(tabs)');
+    //   }
+    // }
   }, [isOnboardingLoading, isAuthLoading, hasCompletedOnboarding, user, segments, router, isConfigured]);
 
   return { isLoading: isOnboardingLoading || isAuthLoading, hasCompletedOnboarding };
