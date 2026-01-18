@@ -60,7 +60,7 @@ export default function SignUpScreen() {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
@@ -68,7 +68,12 @@ export default function SignUpScreen() {
       if (error) {
         setError(error.message);
         setIsLoading(false);
+      } else if (data.session) {
+        // Auto-login successful (email confirmation disabled)
+        // Navigate to main app
+        router.replace('/(tabs)');
       } else {
+        // Email confirmation required
         setSuccess(true);
         setIsLoading(false);
       }
