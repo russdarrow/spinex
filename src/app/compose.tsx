@@ -412,7 +412,7 @@ export default function ComposeScreen() {
                 }
                 placeholderTextColor="#71717a"
                 multiline
-                className="text-lg text-zinc-900 dark:text-white min-h-[120px]"
+                className="text-[15px] text-zinc-900 dark:text-white min-h-[120px]"
                 autoFocus
                 textAlignVertical="top"
               />

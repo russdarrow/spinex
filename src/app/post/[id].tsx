@@ -227,14 +227,14 @@ export default function PostDetailScreen() {
             />
             <View className="ml-3 flex-1">
               <View className="flex-row items-center">
-                <Text className="font-semibold text-zinc-900 dark:text-white">
+                <Text className="font-semibold text-[15px] text-zinc-900 dark:text-white">
                   {post.author.name}
                 </Text>
                 {post.author.isVerified ? (
                   <BadgeCheck size={16} color="#0ea5e9" fill="#0ea5e9" style={{ marginLeft: 4 }} />
                 ) : null}
               </View>
-              <Text className="text-zinc-500 dark:text-zinc-400">@{post.author.handle}</Text>
+              <Text className="text-[14px] text-zinc-500 dark:text-zinc-400">@{post.author.handle}</Text>
             </View>
             <Pressable onPress={handleOpenOptions} className="p-2">
               <MoreHorizontal size={20} color="#71717a" />
@@ -425,7 +425,7 @@ export default function PostDetailScreen() {
           </Modal>
 
           {/* Content */}
-          <Text className="text-lg text-zinc-900 dark:text-white mt-4 leading-6">
+          <Text className="text-[15px] text-zinc-900 dark:text-white mt-4 leading-[22px]">
             {post.content}
           </Text>
 
@@ -434,11 +434,11 @@ export default function PostDetailScreen() {
 
           {/* Timestamp */}
           <View className="flex-row items-center mt-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
-            <Text className="text-zinc-500 dark:text-zinc-400">
+            <Text className="text-[14px] text-zinc-500 dark:text-zinc-400">
               {post.createdAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
             </Text>
-            <Text className="text-zinc-400 mx-1">-</Text>
-            <Text className="text-zinc-500 dark:text-zinc-400">
+            <Text className="text-[14px] text-zinc-400 mx-1">-</Text>
+            <Text className="text-[14px] text-zinc-500 dark:text-zinc-400">
               {post.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </Text>
           </View>
@@ -446,16 +446,16 @@ export default function PostDetailScreen() {
           {/* Stats */}
           <View className="flex-row py-3 border-b border-zinc-100 dark:border-zinc-800">
             <Pressable className="flex-row mr-5">
-              <Text className="font-bold text-zinc-900 dark:text-white">{formatNumber(reposts)}</Text>
-              <Text className="text-zinc-500 dark:text-zinc-400 ml-1">Reposts</Text>
+              <Text className="text-[15px] font-bold text-zinc-900 dark:text-white">{formatNumber(reposts)}</Text>
+              <Text className="text-[15px] text-zinc-500 dark:text-zinc-400 ml-1">Reposts</Text>
             </Pressable>
             <Pressable className="flex-row mr-5">
-              <Text className="font-bold text-zinc-900 dark:text-white">{formatNumber(likes)}</Text>
-              <Text className="text-zinc-500 dark:text-zinc-400 ml-1">Likes</Text>
+              <Text className="text-[15px] font-bold text-zinc-900 dark:text-white">{formatNumber(likes)}</Text>
+              <Text className="text-[15px] text-zinc-500 dark:text-zinc-400 ml-1">Likes</Text>
             </Pressable>
             <Pressable className="flex-row">
-              <Text className="font-bold text-zinc-900 dark:text-white">{formatNumber(post.views)}</Text>
-              <Text className="text-zinc-500 dark:text-zinc-400 ml-1">Views</Text>
+              <Text className="text-[15px] font-bold text-zinc-900 dark:text-white">{formatNumber(post.views)}</Text>
+              <Text className="text-[15px] text-zinc-500 dark:text-zinc-400 ml-1">Views</Text>
             </Pressable>
           </View>
 
@@ -489,27 +489,27 @@ export default function PostDetailScreen() {
                   style={{ width: 40, height: 40, borderRadius: 20 }}
                 />
                 <View className="flex-1 ml-3">
-                  <View className="flex-row items-center">
-                    <Text className="font-semibold text-zinc-900 dark:text-white">
+                  <View className="flex-row items-center flex-wrap">
+                    <Text className="font-semibold text-[15px] text-zinc-900 dark:text-white">
                       {reply.author.name}
                     </Text>
                     {reply.author.isVerified ? (
                       <BadgeCheck size={14} color="#0ea5e9" fill="#0ea5e9" style={{ marginLeft: 4 }} />
                     ) : null}
-                    <Text className="text-zinc-500 dark:text-zinc-400 ml-1">
+                    <Text className="text-[14px] text-zinc-500 dark:text-zinc-400 ml-1">
                       @{reply.author.handle}
                     </Text>
-                    <Text className="text-zinc-400 mx-1">-</Text>
-                    <Text className="text-zinc-500 dark:text-zinc-400">
+                    <Text className="text-[14px] text-zinc-400 mx-1">-</Text>
+                    <Text className="text-[14px] text-zinc-500 dark:text-zinc-400">
                       {formatTimeAgo(reply.createdAt)}
                     </Text>
                   </View>
-                  <Text className="text-zinc-900 dark:text-white mt-1">
+                  <Text className="text-[15px] text-zinc-900 dark:text-white mt-1 leading-[22px]">
                     {reply.content}
                   </Text>
                   <View className="flex-row items-center mt-2">
                     <Heart size={16} color="#71717a" />
-                    <Text className="text-zinc-500 dark:text-zinc-400 text-sm ml-1">
+                    <Text className="text-[13px] text-zinc-500 dark:text-zinc-400 ml-1">
                       {reply.likes}
                     </Text>
                   </View>
@@ -531,13 +531,13 @@ export default function PostDetailScreen() {
           onChangeText={setReplyText}
           placeholder="Post your reply"
           placeholderTextColor="#71717a"
-          className="flex-1 ml-3 text-base text-zinc-900 dark:text-white"
+          className="flex-1 ml-3 text-[15px] text-zinc-900 dark:text-white"
         />
         <Pressable
           className={`px-4 py-1.5 rounded-full ${replyText.trim() ? 'bg-sky-500' : 'bg-sky-300'}`}
           disabled={!replyText.trim()}
         >
-          <Text className="text-white font-semibold">Reply</Text>
+          <Text className="text-[15px] text-white font-semibold">Reply</Text>
         </Pressable>
       </View>
     </SafeAreaView>
