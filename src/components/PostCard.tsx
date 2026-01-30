@@ -6,6 +6,7 @@ import { formatTimeAgo, formatNumber, getCategoryColor, getCategoryLabel } from 
 import { cn } from '@/lib/cn';
 import { Image } from 'expo-image';
 import { MediaGallery } from './MediaGallery';
+import { YouTubeEmbed } from './YouTubeEmbed';
 
 interface PostCardProps {
   post: Post;
@@ -118,6 +119,11 @@ export function PostCard({ post, onPress, onLike, onRepost, onBookmark }: PostCa
 
           {/* Media Gallery */}
           <MediaGallery post={post} />
+
+          {/* YouTube Embed */}
+          {post.youtubeEmbed ? (
+            <YouTubeEmbed embed={post.youtubeEmbed} />
+          ) : null}
 
           {/* Hashtags */}
           {post.hashtags && post.hashtags.length > 0 ? (

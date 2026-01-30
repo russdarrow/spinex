@@ -20,12 +20,19 @@ export interface MediaItem {
   thumbnailUri?: string; // for video thumbnails
 }
 
+export interface YouTubeEmbed {
+  videoId: string;
+  url: string;
+  title?: string;
+}
+
 export interface Post {
   id: string;
   author: User;
   content: string;
   images?: string[];
   media?: MediaItem[]; // New: supports both images and videos with aspect ratios
+  youtubeEmbed?: YouTubeEmbed; // YouTube video embed
   likes: number;
   reposts: number;
   replies: number;

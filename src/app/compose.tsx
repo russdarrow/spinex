@@ -1,16 +1,17 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { X, ImageIcon, Cpu, FileText, FlaskConical, HelpCircle, ChevronDown, MessageSquare, XCircle, Video, Camera, Image as ImageIconLucide } from 'lucide-react-native';
+import { X, ImageIcon, Cpu, FileText, FlaskConical, HelpCircle, ChevronDown, MessageSquare, XCircle, Video, Camera, Image as ImageIconLucide, Youtube, Link as LinkIcon } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { currentUser, devices, getCategoryColor } from '@/lib/mock-data';
-import { PostCategory, MediaItem } from '@/lib/types';
+import { PostCategory, MediaItem, YouTubeEmbed } from '@/lib/types';
 import { usePostsStore } from '@/lib/posts-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import { extractYouTubeVideoId, extractYouTubeUrlFromText } from '@/components/YouTubeEmbed';
 
 const USER_PROFILE_KEY = '@spinex_user_profile';
 
@@ -64,6 +65,24 @@ export default function ComposeScreen() {
   const [userAvatar, setUserAvatar] = useState(currentUser.avatar);
   const [isPosting, setIsPosting] = useState(false);
   const [attachedMedia, setAttachedMedia] = useState<MediaItem[]>([]);
+  const [youtubeEmbed, setYoutubeEmbed] = useState<YouTubeEmbed | null>(null);
+
+  // Detect YouTube URLs in content
+  useEffect(() => {
+    const youtubeUrl = extractYouTubeUrlFromText(content);
+    if (youtubeUrl) {
+      const videoId = extractYouTubeVideoId(youtubeUrl);
+      if (videoId && (!youtubeEmbed || youtubeEmbed.videoId !== videoId)) {
+        setYoutubeEmbed({
+          videoId,
+          url: youtubeUrl,
+        });
+      }
+    } else if (youtubeEmbed) {
+      // URL was removed from content
+      setYoutubeEmbed(null);
+    }
+  }, [content, youtubeEmbed]);
 
   // Load user's avatar
   useFocusEffect(
@@ -265,6 +284,7 @@ export default function ComposeScreen() {
         diagnosis: diagnosis || undefined,
         procedure: procedure || undefined,
         media: attachedMedia.length > 0 ? attachedMedia : undefined,
+        youtubeEmbed: youtubeEmbed ?? undefined,
       });
       router.back();
     } catch (e) {
@@ -463,6 +483,36 @@ export default function ComposeScreen() {
               <Text className="text-zinc-400 text-xs mt-2">
                 {hasVideo ? '1 video attached' : `${mediaCount}/4 images`}
               </Text>
+            </View>
+          ) : null}
+
+          {/* YouTube Preview */}
+          {youtubeEmbed ? (
+            <View className="px-4 mt-4">
+              <View className="bg-zinc-900 rounded-xl overflow-hidden">
+                <View className="relative" style={{ aspectRatio: 16 / 9 }}>
+                  <Image
+                    source={{ uri: `https://img.youtube.com/vi/${youtubeEmbed.videoId}/hqdefault.jpg` }}
+                    style={{ width: '100%', height: '100%' }}
+                    contentFit="cover"
+                  />
+                  <View className="absolute inset-0 items-center justify-center bg-black/30">
+                    <View className="bg-red-600 rounded-xl px-4 py-2 flex-row items-center">
+                      <Youtube size={20} color="white" />
+                      <Text className="text-white font-semibold ml-2">YouTube</Text>
+                    </View>
+                  </View>
+                  <Pressable
+                    onPress={() => setYoutubeEmbed(null)}
+                    className="absolute top-2 right-2 bg-black/70 rounded-full p-1"
+                  >
+                    <XCircle size={22} color="white" />
+                  </Pressable>
+                </View>
+                <View className="px-3 py-2">
+                  <Text className="text-zinc-400 text-xs">Video will open in YouTube</Text>
+                </View>
+              </View>
             </View>
           ) : null}
         </ScrollView>
