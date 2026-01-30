@@ -17,6 +17,7 @@ A Twitter/X-style social media app designed for spine surgeons to discuss patien
 - **Profile**: View and manage your profile and activity
 - **Compose Posts**: Create posts with category selection
 - **YouTube Embeds**: Paste YouTube links in posts to embed video previews
+- **Invite & Share**: Share the app with QR code and link to grow the community
 
 ### Spine Surgery Specific
 - **Case Discussions**: Share patient cases with diagnosis, procedure, and outcomes

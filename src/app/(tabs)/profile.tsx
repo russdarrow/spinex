@@ -1,11 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MapPin, Calendar, Link as LinkIcon, BadgeCheck, Grid3X3, Bookmark, ShieldCheck } from 'lucide-react-native';
+import { MapPin, Calendar, Link as LinkIcon, BadgeCheck, Grid3X3, Bookmark, ShieldCheck, Share2, UserPlus } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { currentUser, posts, formatNumber } from '@/lib/mock-data';
 import { PostCard } from '@/components/PostCard';
+import { ShareApp } from '@/components/ShareApp';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface UserProfile {
@@ -27,6 +28,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'posts' | 'replies' | 'media' | 'likes'>('posts');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Reload profile data every time the screen comes into focus
   useFocusEffect(
@@ -71,12 +73,20 @@ export default function ProfileScreen() {
               source={{ uri: displayAvatar }}
               className="w-24 h-24 rounded-full border-4 border-white dark:border-black"
             />
-            <Pressable
-              onPress={() => router.push('/edit-profile')}
-              className="border border-zinc-300 dark:border-zinc-600 px-4 py-1.5 rounded-full mb-2 active:bg-zinc-100 dark:active:bg-zinc-800"
-            >
-              <Text className="font-semibold text-zinc-900 dark:text-white text-sm">Edit profile</Text>
-            </Pressable>
+            <View className="flex-row items-center mb-2">
+              <Pressable
+                onPress={() => setShowShareModal(true)}
+                className="border border-zinc-300 dark:border-zinc-600 p-2 rounded-full mr-2 active:bg-zinc-100 dark:active:bg-zinc-800"
+              >
+                <UserPlus size={18} color="#71717a" />
+              </Pressable>
+              <Pressable
+                onPress={() => router.push('/edit-profile')}
+                className="border border-zinc-300 dark:border-zinc-600 px-4 py-1.5 rounded-full active:bg-zinc-100 dark:active:bg-zinc-800"
+              >
+                <Text className="font-semibold text-zinc-900 dark:text-white text-sm">Edit profile</Text>
+              </Pressable>
+            </View>
           </View>
 
           {/* Name & Handle */}
@@ -214,6 +224,12 @@ export default function ProfileScreen() {
           </View>
         ) : null}
       </ScrollView>
+
+      {/* Share Modal */}
+      <ShareApp
+        visible={showShareModal}
+        onClose={() => setShowShareModal(false)}
+      />
       </SafeAreaView>
     </View>
   );

@@ -1,12 +1,16 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, RefreshControl, Image, Pressable } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, Image, Pressable, Share, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Pencil } from 'lucide-react-native';
+import { Pencil, Users, X, ChevronRight } from 'lucide-react-native';
 import { PostCard } from '@/components/PostCard';
 import { currentUser } from '@/lib/mock-data';
 import { usePostsStore } from '@/lib/posts-store';
 import { useFollowsStore } from '@/lib/follows-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const INVITE_BANNER_KEY = '@spinex_invite_banner_dismissed';
+const APP_INVITE_URL = 'https://www.vibecodeapp.com/s/spinex';
 
 export default function FeedScreen() {
   const router = useRouter();
@@ -17,6 +21,35 @@ export default function FeedScreen() {
   const followingIds = useFollowsStore((s) => s.followingIds);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'forYou' | 'following'>('forYou');
+  const [showInviteBanner, setShowInviteBanner] = useState(true);
+
+  // Check if banner was dismissed
+  React.useEffect(() => {
+    AsyncStorage.getItem(INVITE_BANNER_KEY).then((value) => {
+      if (value === 'true') {
+        setShowInviteBanner(false);
+      }
+    });
+  }, []);
+
+  const dismissBanner = async () => {
+    setShowInviteBanner(false);
+    await AsyncStorage.setItem(INVITE_BANNER_KEY, 'true');
+  };
+
+  const handleInvite = async () => {
+    try {
+      await Share.share({
+        message: Platform.OS === 'ios'
+          ? 'Join me on SpineX - the professional network for spine surgeons! 🩺'
+          : `Join me on SpineX - the professional network for spine surgeons! 🩺\n\n${APP_INVITE_URL}`,
+        url: Platform.OS === 'ios' ? APP_INVITE_URL : undefined,
+        title: 'Join SpineX',
+      });
+    } catch (error) {
+      console.log('Error sharing:', error);
+    }
+  };
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -74,6 +107,33 @@ export default function FeedScreen() {
           }
           showsVerticalScrollIndicator={false}
         >
+          {/* Invite Banner */}
+          {showInviteBanner ? (
+            <Pressable
+              onPress={handleInvite}
+              className="mx-4 mt-4 bg-gradient-to-r from-sky-500 to-cyan-500 rounded-2xl overflow-hidden"
+              style={{ backgroundColor: '#0ea5e9' }}
+            >
+              <View className="flex-row items-center p-4">
+                <View className="w-10 h-10 rounded-full bg-white/20 items-center justify-center mr-3">
+                  <Users size={20} color="white" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-white font-bold text-base">Invite Colleagues</Text>
+                  <Text className="text-white/80 text-sm">Help grow our community of spine surgeons</Text>
+                </View>
+                <ChevronRight size={20} color="white" />
+              </View>
+              <Pressable
+                onPress={dismissBanner}
+                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/20 items-center justify-center"
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <X size={14} color="white" />
+              </Pressable>
+            </Pressable>
+          ) : null}
+
           {displayedPosts.length > 0 ? (
             displayedPosts.map(post => (
               <PostCard
