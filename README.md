@@ -59,6 +59,15 @@ A Twitter/X-style social media app designed for spine surgeons to discuss patien
 - React Query for state management
 - Supabase for authentication and database
 
+## Platform Support
+
+The app runs on **iOS**, **Android**, and **Web** (via Expo Web).
+
+### Web-Specific Features
+- YouTube videos play inline via embedded iframe player
+- File picker for images and videos uses native browser APIs
+- Optimized layout without native-only dependencies (KeyboardController)
+
 ## Supabase Integration
 
 ### Authentication
